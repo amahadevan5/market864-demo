@@ -11,7 +11,7 @@ import {
 import { Tv, Users, Target, TrendingUp, Clock, Flame, ThermometerSun, DollarSign } from 'lucide-react';
 import * as demo from '../data/williamsWealthDemo';
 
-export function WilliamsWealthDemo() {
+export function Market864Demo() {
   const [activeTab, setActiveTab] = useState<'overview' | 'leads' | 'tv' | 'alerts'>('overview');
 
   return (
@@ -126,7 +126,7 @@ function OverviewTab() {
               />
               <Legend />
               <Bar dataKey="visits" name="Website Visits" fill="#94A3B8" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="attributed" name="TV Attributed Leads" fill="#5A9BD5" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="leads" name="TV Attributed Leads" fill="#5A9BD5" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -173,7 +173,7 @@ function OverviewTab() {
           <p className="text-sm text-muted-foreground mb-4">Website visits spike after 4:30pm airing</p>
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={demo.hourlyTraffic}>
-              <XAxis dataKey="time" tick={{ fontSize: 10 }} />
+              <XAxis dataKey="hour" tick={{ fontSize: 10 }} />
               <YAxis tick={{ fontSize: 12 }} />
               <Tooltip
                 contentStyle={{ 
@@ -182,8 +182,7 @@ function OverviewTab() {
                   borderRadius: '8px'
                 }}
               />
-              <Area type="monotone" dataKey="baseline" name="Baseline" stroke="#94A3B8" fill="#94A3B8" fillOpacity={0.3} />
-              <Area type="monotone" dataKey="visits" name="Actual Visits" stroke="#5A9BD5" fill="#5A9BD5" fillOpacity={0.5} />
+              <Area type="monotone" dataKey="visits" name="Visits" stroke="#5A9BD5" fill="#5A9BD5" fillOpacity={0.5} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -236,7 +235,7 @@ function OverviewTab() {
                 Call Now
               </button>
               <button className="px-4 py-2 border border-border rounded-lg text-sm font-medium">
-                View in Wealthbox
+                View in CRM
               </button>
             </div>
           </div>
@@ -255,7 +254,7 @@ function LeadsTab() {
   return (
     <div className="space-y-4">
       {/* Segment Summary */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { segment: 'Hot', count: 8, icon: <Flame className="w-4 h-4" />, color: 'text-red-500' },
           { segment: 'Warm', count: 12, icon: <ThermometerSun className="w-4 h-4" />, color: 'text-orange-500' },
@@ -454,4 +453,4 @@ function KPICard({ title, value, subtitle, icon, trend }: {
   );
 }
 
-export default WilliamsWealthDemo;
+export default Market864Demo;

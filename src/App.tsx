@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
-import { WilliamsWealthDemo } from './pages/WilliamsWealthDemo';
+import { Market864Demo } from './pages/Market864Demo';
+
 
 function App() {
   useEffect(() => { document.title = 'Market864 Attribution'; }, []);
-  return <WilliamsWealthDemo />;
+  return <Market864Demo />;
 }
 
 export default App;
