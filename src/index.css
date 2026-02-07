@@ -1,0 +1,257 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
+   DESIGN SYSTEM: Theme Tokens
+   ============================================ */
+@layer base {
+  :root {
+    /* Light mode (unused but defined) */
+    --surface-base: 0 0% 100%;
+    --surface-elevated: 0 0% 98%;
+    --border: 220 13% 90%;
+    --border-subtle: 220 13% 93%;
+    --border-strong: 220 13% 80%;
+    --foreground: 220 13% 10%;
+    --foreground-muted: 220 10% 45%;
+    --foreground-subtle: 220 10% 60%;
+    --accent: 160 84% 39%;
+    --accent-muted: 160 50% 90%;
+    --accent-foreground: 0 0% 100%;
+    --state-success: 160 84% 39%;
+    --state-warning: 38 92% 50%;
+    --state-danger: 0 72% 51%;
+  }
+
+  .dark {
+    /* Dark mode: 2-layer surfaces */
+    --surface-base: 220 13% 6%;        /* Very dark base: #0d0f11 */
+    --surface-elevated: 220 13% 10%;   /* Elevated panels: #161a1e */
+    
+    /* Borders: low-contrast by default */
+    --border: 220 13% 16%;             /* Default border */
+    --border-subtle: 220 13% 12%;      /* Subtle border */
+    --border-strong: 220 13% 25%;      /* Hover/focus border */
+    
+    /* Text hierarchy */
+    --foreground: 210 20% 98%;         /* Primary text */
+    --foreground-muted: 215 15% 60%;   /* Secondary text */
+    --foreground-subtle: 215 15% 40%;  /* Tertiary text */
+    
+    /* Primary accent: Emerald */
+    --accent: 160 84% 45%;             /* #22c55e-ish */
+    --accent-muted: 160 40% 15%;       /* Muted accent bg */
+    --accent-foreground: 220 13% 6%;   /* Text on accent */
+    
+    /* Semantic states ONLY */
+    --state-success: 160 84% 45%;      /* Green */
+    --state-warning: 38 92% 50%;       /* Amber */
+    --state-danger: 0 72% 51%;         /* Red */
+  }
+}
+
+/* ============================================
+   DESIGN SYSTEM: Base Styles
+   ============================================ */
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-surface-base text-foreground dark;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Monospace for IDs, ports, schedules */
+  code, .mono {
+    font-family: ui-monospace, 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+    font-size: 0.875em;
+  }
+}
+
+/* ============================================
+   DESIGN SYSTEM: Component Layer
+   ============================================ */
+@layer components {
+  /* --- Panel / Card --- */
+  .panel {
+    @apply bg-surface-elevated border border-border rounded-xl;
+  }
+  
+  .panel-hover {
+    @apply transition-[border-color,transform] duration-hover;
+  }
+  .panel-hover:hover {
+    @apply border-border-strong -translate-y-px;
+  }
+  
+  /* --- Status Chip (text + dot + optional reason) --- */
+  .status-chip {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-meta font-medium;
+  }
+  .status-chip-live {
+    @apply bg-state-success/10 text-[hsl(160_84%_45%)];
+  }
+  .status-chip-degraded {
+    @apply bg-state-warning/10 text-[hsl(38_92%_50%)];
+  }
+  .status-chip-disconnected {
+    @apply bg-state-danger/10 text-[hsl(0_72%_51%)];
+  }
+  .status-chip-idle {
+    @apply bg-foreground-subtle/10 text-foreground-muted;
+  }
+  
+  /* --- Status Dot (inside chips only) --- */
+  .status-dot {
+    @apply w-1.5 h-1.5 rounded-full flex-shrink-0;
+  }
+  .status-dot-live {
+    @apply bg-state-success;
+  }
+  .status-dot-degraded {
+    @apply bg-state-warning;
+  }
+  .status-dot-disconnected {
+    @apply bg-state-danger;
+  }
+  .status-dot-idle {
+    @apply bg-foreground-subtle;
+  }
+  
+  /* --- Glow: ONLY for critical/live/degraded indicators --- */
+  .glow-critical {
+    @apply animate-pulse-critical;
+    box-shadow: 0 0 0 1px hsl(var(--state-danger) / 0.3);
+  }
+  .glow-live {
+    box-shadow: 0 0 0 1px hsl(var(--state-success) / 0.2),
+                0 0 12px -3px hsl(var(--state-success) / 0.3);
+  }
+  .glow-degraded {
+    box-shadow: 0 0 0 1px hsl(var(--state-warning) / 0.2),
+                0 0 12px -3px hsl(var(--state-warning) / 0.3);
+  }
+  
+  /* --- Badges --- */
+  .badge {
+    @apply inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-meta font-medium uppercase tracking-wide;
+  }
+  .badge-live {
+    @apply bg-state-success/15 text-[hsl(160_84%_45%)];
+  }
+  .badge-degraded {
+    @apply bg-state-warning/15 text-[hsl(38_92%_50%)];
+  }
+  .badge-disconnected {
+    @apply bg-state-danger/15 text-[hsl(0_72%_51%)];
+  }
+  .badge-neutral {
+    @apply bg-foreground-subtle/10 text-foreground-muted;
+  }
+  
+  /* --- Skeleton Loaders --- */
+  .skeleton {
+    @apply bg-foreground-subtle/10 rounded animate-skeleton;
+  }
+  .skeleton-text {
+    @apply h-4 rounded;
+  }
+  .skeleton-title {
+    @apply h-6 rounded;
+  }
+  .skeleton-avatar {
+    @apply rounded-lg;
+  }
+  
+  /* --- Table Styles --- */
+  .table-container {
+    @apply overflow-x-auto;
+  }
+  .table {
+    @apply w-full text-body-sm;
+  }
+  .table th {
+    @apply px-4 py-3 text-left text-meta font-medium text-foreground-muted uppercase tracking-wide bg-surface-base border-b border-border;
+  }
+  .table td {
+    @apply px-4 py-3 border-b border-border-subtle;
+  }
+  .table tbody tr {
+    @apply transition-colors duration-hover hover:bg-surface-elevated/50;
+  }
+  
+  /* --- KPI Display --- */
+  .kpi-value {
+    @apply text-kpi font-bold tracking-tight;
+  }
+  .kpi-value-lg {
+    @apply text-kpi-lg font-bold tracking-tight;
+  }
+  .kpi-label {
+    @apply text-meta text-foreground-muted font-medium;
+  }
+  
+  /* --- Icon Containers --- */
+  .icon-box {
+    @apply flex items-center justify-center rounded-lg;
+  }
+  .icon-box-sm {
+    @apply w-8 h-8;
+  }
+  .icon-box-md {
+    @apply w-10 h-10;
+  }
+  
+  /* --- Button Base --- */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors duration-hover disabled:opacity-50 disabled:pointer-events-none;
+  }
+  .btn-sm {
+    @apply px-3 py-1.5 text-body-sm;
+  }
+  .btn-md {
+    @apply px-4 py-2 text-body;
+  }
+  .btn-primary {
+    @apply bg-accent text-accent-foreground hover:bg-accent/90;
+  }
+  .btn-ghost {
+    @apply bg-transparent text-foreground-muted hover:bg-surface-elevated hover:text-foreground;
+  }
+  .btn-outline {
+    @apply border border-border bg-transparent text-foreground hover:bg-surface-elevated hover:border-border-strong;
+  }
+}
+
+/* ============================================
+   DESIGN SYSTEM: Utilities
+   ============================================ */
+@layer utilities {
+  /* Scrollbar */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-foreground-subtle/30 rounded-full;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    @apply bg-foreground-subtle/50;
+  }
+  
+  /* No-value placeholder */
+  .no-value {
+    @apply text-foreground-subtle;
+  }
+  .no-value::before {
+    content: '—';
+  }
+}
