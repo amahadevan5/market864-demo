@@ -1,10 +1,10 @@
-// Williams Wealth Management - Demo Data
+// Market864 - Demo Data
 // Generated from anonymized CRM patterns (2026-02-04)
 // NO PII - patterns only
 
 export const williamsWealthConfig = {
   client: {
-    name: "Williams Wealth Management",
+    name: "Market864",
     location: "Greenville, SC",
     dmaCode: 567,
     dmaName: "Greenville-Spartanburg-Asheville-Anderson",
@@ -31,7 +31,7 @@ export const attributionWindows = {
   weekWindow: { days: 7, weight: 10, label: "Within Week", decay: true },
 };
 
-// Scoring model based on Williams Wealth parameters
+// Scoring model based on Market864 parameters
 export const scoringRules = [
   { factor: "TV spot time window (15min)", weight: 40, category: "timing" },
   { factor: "TV spot time window (4hr)", weight: 25, category: "timing" },

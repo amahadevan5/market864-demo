@@ -1,5 +1,5 @@
 /**
- * Williams Wealth Management - Demo Dashboard
+ * Market864 - Demo Dashboard
  * Shows what the attribution system would look like with their data
  */
 
@@ -26,7 +26,7 @@ export function WilliamsWealthDemo() {
                   <Tv className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-foreground">Williams Wealth Management</h1>
+                  <h1 className="text-xl font-bold text-foreground">Market864</h1>
                   <p className="text-sm text-muted-foreground">TV Attribution Dashboard • WYFF4 Campaign</p>
                 </div>
               </div>
