@@ -3,16 +3,34 @@
  * Shows what the attribution system would look like with their data
  */
 
-import { useState } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, AreaChart, Area, Legend
 } from 'recharts';
-import { Tv, Users, Target, TrendingUp, Clock, Flame, ThermometerSun, DollarSign } from 'lucide-react';
+import { Tv, Users, Target, TrendingUp, Clock, Flame, ThermometerSun, DollarSign, X, Phone, Mail } from 'lucide-react';
 import * as demo from '../data/williamsWealthDemo';
+import { useToast } from '../components/ToastProvider';
+
+type TabId = 'overview' | 'leads' | 'tv' | 'alerts';
+const VALID_TABS: TabId[] = ['overview', 'leads', 'tv', 'alerts'];
+
+function getInitialTab(): TabId {
+  const params = new URLSearchParams(window.location.search);
+  const tab = params.get('tab') as TabId;
+  return VALID_TABS.includes(tab) ? tab : 'overview';
+}
 
 export function Market864Demo() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'leads' | 'tv' | 'alerts'>('overview');
+  const [activeTab, setActiveTab] = useState<TabId>(getInitialTab);
+
+  const switchTab = useCallback((tab: TabId) => {
+    setActiveTab(tab);
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', tab);
+    history.replaceState(null, '', url.toString());
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -41,14 +59,14 @@ export function Market864Demo() {
           {/* Tabs */}
           <div className="flex gap-1 mt-4 -mb-px">
             {[
-              { id: 'overview', label: 'Overview' },
-              { id: 'leads', label: 'Leads' },
-              { id: 'tv', label: 'TV Performance' },
-              { id: 'alerts', label: 'Alerts' },
+              { id: 'overview' as TabId, label: 'Overview' },
+              { id: 'leads' as TabId, label: 'Leads' },
+              { id: 'tv' as TabId, label: 'TV Performance' },
+              { id: 'alerts' as TabId, label: 'Alerts' },
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as typeof activeTab)}
+                onClick={() => switchTab(tab.id)}
                 className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
                   activeTab === tab.id
                     ? 'bg-background text-foreground border border-border border-b-background -mb-px'
@@ -74,6 +92,8 @@ export function Market864Demo() {
 }
 
 function OverviewTab() {
+  const showToast = useToast();
+
   return (
     <div className="space-y-6">
       {/* KPI Cards */}
@@ -118,8 +138,8 @@ function OverviewTab() {
               <XAxis dataKey="week" tick={{ fontSize: 12 }} />
               <YAxis tick={{ fontSize: 12 }} />
               <Tooltip
-                contentStyle={{ 
-                  backgroundColor: 'hsl(var(--card))', 
+                contentStyle={{
+                  backgroundColor: 'hsl(var(--card))',
                   border: '1px solid hsl(var(--border))',
                   borderRadius: '8px'
                 }}
@@ -176,8 +196,8 @@ function OverviewTab() {
               <XAxis dataKey="hour" tick={{ fontSize: 10 }} />
               <YAxis tick={{ fontSize: 12 }} />
               <Tooltip
-                contentStyle={{ 
-                  backgroundColor: 'hsl(var(--card))', 
+                contentStyle={{
+                  backgroundColor: 'hsl(var(--card))',
                   border: '1px solid hsl(var(--border))',
                   borderRadius: '8px'
                 }}
@@ -198,7 +218,7 @@ function OverviewTab() {
                 <div key={item.stage} className="relative">
                   <div
                     className="h-8 rounded flex items-center justify-between px-3 text-white text-sm"
-                    style={{ 
+                    style={{
                       width: `${widthPercent}%`,
                       backgroundColor: item.color,
                       minWidth: '150px',
@@ -217,7 +237,7 @@ function OverviewTab() {
       {/* Latest Hot Lead */}
       <div className="bg-card rounded-lg shadow-sm border border-border p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">🔥 Latest Hot Lead</h3>
+          <h3 className="text-lg font-semibold">Latest Hot Lead</h3>
           <span className="text-sm text-muted-foreground">22 minutes ago</span>
         </div>
         <div className="flex items-center gap-6">
@@ -231,10 +251,16 @@ function OverviewTab() {
               Source: Mike Giordano @ WYFF News 4 • Greenville, SC
             </p>
             <div className="flex gap-2 mt-3">
-              <button className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium">
+              <button
+                onClick={() => showToast('Calling Robert Anderson...')}
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium"
+              >
                 Call Now
               </button>
-              <button className="px-4 py-2 border border-border rounded-lg text-sm font-medium">
+              <button
+                onClick={() => showToast('Opening CRM record...')}
+                className="px-4 py-2 border border-border rounded-lg text-sm font-medium"
+              >
                 View in CRM
               </button>
             </div>
@@ -242,7 +268,7 @@ function OverviewTab() {
           <div className="text-right">
             <p className="text-sm text-muted-foreground">Time since TV spot:</p>
             <p className="text-2xl font-bold text-primary">22 min</p>
-            <p className="text-xs text-green-600 mt-1">✓ Within attribution window</p>
+            <p className="text-xs text-green-600 mt-1">Within attribution window</p>
           </div>
         </div>
       </div>
@@ -250,7 +276,83 @@ function OverviewTab() {
   );
 }
 
+type SegmentFilter = 'all' | 'hot' | 'warm' | 'cool';
+type SourceFilter = 'all' | 'TV' | 'Internet' | 'Referral' | 'Other';
+type SortBy = 'score-desc' | 'score-asc' | 'newest' | 'oldest';
+
+const CATEGORY_COLORS: Record<string, string> = {
+  timing: '#3B82F6',
+  geo: '#10B981',
+  source: '#059669',
+  intent: '#8B5CF6',
+  behavior: '#F59E0B',
+  qualification: '#EC4899',
+};
+
 function LeadsTab() {
+  const showToast = useToast();
+  const [segmentFilter, setSegmentFilter] = useState<SegmentFilter>('all');
+  const [sourceFilter, setSourceFilter] = useState<SourceFilter>('all');
+  const [sortBy, setSortBy] = useState<SortBy>('score-desc');
+  const [selectedLead, setSelectedLead] = useState<typeof demo.recentLeads[0] | null>(null);
+
+  const filteredLeads = useMemo(() => {
+    let leads = [...demo.recentLeads];
+
+    if (segmentFilter !== 'all') {
+      leads = leads.filter((l) => l.segment === segmentFilter);
+    }
+    if (sourceFilter !== 'all') {
+      if (sourceFilter === 'Internet') {
+        leads = leads.filter((l) => l.source === 'Internet Lead' || l.source === 'LinkedIn');
+      } else if (sourceFilter === 'Referral') {
+        leads = leads.filter((l) => l.source === 'Client Referral');
+      } else if (sourceFilter === 'Other') {
+        leads = leads.filter((l) => !['TV', 'Internet Lead', 'LinkedIn', 'Client Referral'].includes(l.source));
+      } else {
+        leads = leads.filter((l) => l.source === sourceFilter);
+      }
+    }
+
+    leads.sort((a, b) => {
+      switch (sortBy) {
+        case 'score-desc': return b.score - a.score;
+        case 'score-asc': return a.score - b.score;
+        case 'newest': return new Date(b.created).getTime() - new Date(a.created).getTime();
+        case 'oldest': return new Date(a.created).getTime() - new Date(b.created).getTime();
+        default: return 0;
+      }
+    });
+
+    return leads;
+  }, [segmentFilter, sourceFilter, sortBy]);
+
+  // Lock scroll when modal is open
+  useEffect(() => {
+    if (selectedLead) {
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = ''; };
+    }
+  }, [selectedLead]);
+
+  // Close modal on Escape
+  useEffect(() => {
+    if (!selectedLead) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setSelectedLead(null);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [selectedLead]);
+
+  const clearFilters = () => {
+    setSegmentFilter('all');
+    setSourceFilter('all');
+    setSortBy('score-desc');
+  };
+
+  const hasFilters = segmentFilter !== 'all' || sourceFilter !== 'all';
+
   return (
     <div className="space-y-4">
       {/* Segment Summary */}
@@ -271,41 +373,324 @@ function LeadsTab() {
         ))}
       </div>
 
+      {/* Filter Bar */}
+      <div className="bg-card rounded-lg border border-border p-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="text-sm font-medium text-muted-foreground">Segment:</span>
+          <div className="flex flex-wrap gap-1">
+            {(['all', 'hot', 'warm', 'cool'] as const).map((seg) => (
+              <button
+                key={seg}
+                onClick={() => setSegmentFilter(seg)}
+                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                  segmentFilter === seg
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {seg === 'all' ? 'All' : seg.charAt(0).toUpperCase() + seg.slice(1)}
+              </button>
+            ))}
+          </div>
+
+          <span className="text-border">|</span>
+
+          <span className="text-sm font-medium text-muted-foreground">Source:</span>
+          <div className="flex flex-wrap gap-1">
+            {(['all', 'TV', 'Internet', 'Referral', 'Other'] as const).map((src) => (
+              <button
+                key={src}
+                onClick={() => setSourceFilter(src)}
+                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                  sourceFilter === src
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {src === 'all' ? 'All' : src}
+              </button>
+            ))}
+          </div>
+
+          <span className="text-border">|</span>
+
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortBy)}
+            className="text-xs bg-muted border border-border rounded px-2 py-1 text-foreground"
+          >
+            <option value="score-desc">Score: High → Low</option>
+            <option value="score-asc">Score: Low → High</option>
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+          </select>
+        </div>
+
+        <div className="flex items-center justify-between mt-2">
+          <span className="text-xs text-muted-foreground">
+            Showing {filteredLeads.length} of {demo.recentLeads.length} leads
+          </span>
+          {hasFilters && (
+            <button
+              onClick={clearFilters}
+              className="text-xs text-primary hover:underline"
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Lead Cards */}
       <div className="space-y-3">
-        {demo.recentLeads.map((lead) => (
-          <div key={lead.id} className="bg-card rounded-lg shadow-sm border border-border p-4">
-            <div className="flex items-start gap-4">
-              <div className={`flex items-center justify-center w-14 h-14 rounded-lg font-bold text-lg ${
-                lead.score >= 80 ? 'bg-green-100 text-green-600 dark:bg-green-900/30' :
-                lead.score >= 60 ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30' :
-                'bg-gray-100 text-gray-600 dark:bg-gray-800'
-              }`}>
-                {lead.score}
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <h4 className="font-semibold">{lead.name}</h4>
-                  {lead.segment === 'hot' && <Flame className="w-4 h-4 text-red-500" />}
+        {filteredLeads.length === 0 ? (
+          <div className="bg-card rounded-lg border border-border p-8 text-center">
+            <p className="text-muted-foreground">No leads match your filters.</p>
+            <button onClick={clearFilters} className="text-sm text-primary hover:underline mt-2">
+              Clear filters
+            </button>
+          </div>
+        ) : (
+          filteredLeads.map((lead) => (
+            <div
+              key={lead.id}
+              onClick={() => setSelectedLead(lead)}
+              className="bg-card rounded-lg shadow-sm border border-border p-4 cursor-pointer hover:border-primary/50 transition-colors"
+            >
+              <div className="flex items-start gap-4">
+                <div className={`flex items-center justify-center w-14 h-14 rounded-lg font-bold text-lg ${
+                  lead.score >= 80 ? 'bg-green-100 text-green-600 dark:bg-green-900/30' :
+                  lead.score >= 60 ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30' :
+                  'bg-gray-100 text-gray-600 dark:bg-gray-800'
+                }`}>
+                  {lead.score}
                 </div>
-                <p className="text-sm text-muted-foreground">{lead.topic}</p>
-                <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                  <span>{lead.source}</span>
-                  <span>•</span>
-                  <span>{lead.dma}</span>
-                  <span>•</span>
-                  <span>{lead.time_since_spot} after spot</span>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-semibold">{lead.name}</h4>
+                    {lead.segment === 'hot' && <Flame className="w-4 h-4 text-red-500" />}
+                  </div>
+                  <p className="text-sm text-muted-foreground">{lead.topic}</p>
+                  <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                    <span>{lead.source}</span>
+                    <span>•</span>
+                    <span>{lead.dma}</span>
+                    <span>•</span>
+                    <span>{lead.time_since_spot} after spot</span>
+                  </div>
                 </div>
-              </div>
-              <div className="flex gap-2">
-                <button className="px-3 py-1.5 bg-primary text-primary-foreground rounded text-sm">Call</button>
-                <button className="px-3 py-1.5 border border-border rounded text-sm">Email</button>
+                <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    onClick={() => showToast(`Calling ${lead.name}...`)}
+                    className="px-3 py-1.5 bg-primary text-primary-foreground rounded text-sm"
+                  >
+                    Call
+                  </button>
+                  <button
+                    onClick={() => showToast(`Opening email draft for ${lead.name}...`)}
+                    className="px-3 py-1.5 border border-border rounded text-sm"
+                  >
+                    Email
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
+
+      {/* Lead Detail Modal */}
+      {selectedLead && <LeadDetailModal lead={selectedLead} onClose={() => setSelectedLead(null)} />}
     </div>
+  );
+}
+
+function LeadDetailModal({ lead, onClose }: { lead: typeof demo.recentLeads[0]; onClose: () => void }) {
+  const showToast = useToast();
+
+  // Determine applicable scoring rules based on lead properties
+  const applicableRules = useMemo(() => {
+    const rules: Array<typeof demo.scoringRules[0] & { active: boolean }> = demo.scoringRules.map((rule) => {
+      let active = false;
+      if (rule.category === 'timing' && lead.attributedToTV) {
+        if (rule.factor.includes('15min') && lead.time_since_spot.includes('min')) active = true;
+        if (rule.factor.includes('4hr') && lead.attributedToTV) active = true;
+      }
+      if (rule.category === 'geo' && lead.dma === 'Greenville DMA') active = true;
+      if (rule.category === 'source' && lead.source === 'TV') active = true;
+      if (rule.category === 'intent') {
+        if (rule.factor.includes('Retirement') && lead.topic === 'Retirement Planning') active = true;
+        if (rule.factor.includes('Estate') && lead.topic === 'Estate Planning') active = true;
+      }
+      if (rule.category === 'behavior') active = lead.attributedToTV;
+      if (rule.category === 'qualification') active = lead.score >= 80;
+      return { ...rule, active };
+    });
+    return rules;
+  }, [lead]);
+
+  // Find matching journey for TV leads
+  const journey = useMemo(() => {
+    if (!lead.attributedToTV) return null;
+    return demo.tvAttributionDetails.journeyExamples.find((j) => j.state === lead.state) || null;
+  }, [lead]);
+
+  const segmentLabel = lead.score >= 80 ? 'Hot' : lead.score >= 60 ? 'Warm' : 'Cool';
+  const segmentColor = lead.score >= 80 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+    : lead.score >= 60 ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+    : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400';
+
+  const maxWeight = Math.max(...demo.scoringRules.map((r) => r.weight));
+
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/50 animate-fade-in" />
+      <div
+        className="relative bg-card border border-border rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-fade-in"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="sticky top-0 bg-card border-b border-border p-6 rounded-t-xl flex items-start justify-between">
+          <div className="flex items-center gap-4">
+            <div className={`flex items-center justify-center w-16 h-16 rounded-full font-bold text-2xl ${
+              lead.score >= 80 ? 'bg-green-100 text-green-600 dark:bg-green-900/30' :
+              lead.score >= 60 ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30' :
+              'bg-gray-100 text-gray-600 dark:bg-gray-800'
+            }`}>
+              {lead.score}
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-bold">{lead.name}</h2>
+                <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${segmentColor}`}>
+                  {segmentLabel}
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground">{lead.topic} • {lead.status}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-1 text-muted-foreground hover:text-foreground rounded">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-6">
+          {/* Info Grid */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-xs text-muted-foreground">Advisor</p>
+              <p className="text-sm font-medium">{lead.advisor}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">DMA</p>
+              <p className="text-sm font-medium">{lead.dma}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Source</p>
+              <p className="text-sm font-medium">{lead.source}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Time Since Spot</p>
+              <p className="text-sm font-medium">{lead.time_since_spot}</p>
+            </div>
+          </div>
+
+          {/* Score Breakdown */}
+          <div>
+            <h3 className="text-sm font-semibold mb-3">Score Breakdown</h3>
+            <div className="space-y-2">
+              {applicableRules.map((rule) => (
+                <div key={rule.factor} className="flex items-center gap-3">
+                  <div className="w-[140px] text-xs text-muted-foreground truncate" title={rule.factor}>
+                    {rule.factor}
+                  </div>
+                  <div className="flex-1 bg-muted rounded-full h-4 overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{
+                        width: `${(rule.weight / maxWeight) * 100}%`,
+                        backgroundColor: rule.active
+                          ? CATEGORY_COLORS[rule.category] || '#6B7280'
+                          : '#D1D5DB',
+                        opacity: rule.active ? 1 : 0.4,
+                      }}
+                    />
+                  </div>
+                  <span className={`text-xs font-medium w-6 text-right ${rule.active ? 'text-foreground' : 'text-muted-foreground'}`}>
+                    {rule.weight}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-3 mt-3">
+              {Object.entries(CATEGORY_COLORS).map(([cat, color]) => (
+                <div key={cat} className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
+                  {cat}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Journey Timeline (TV leads only) */}
+          {journey && (
+            <div>
+              <h3 className="text-sm font-semibold mb-3">Attribution Journey</h3>
+              <div className="flex items-center gap-0 overflow-x-auto pb-2">
+                {journey.touchpoints.map((tp, i) => {
+                  const isCompleted = journey.outcome === 'Tier 1 Client' || i < journey.touchpoints.length - 1;
+                  const isLast = i === journey.touchpoints.length - 1;
+                  return (
+                    <div key={i} className="flex items-center">
+                      <div className="flex flex-col items-center">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium border-2 ${
+                          isCompleted
+                            ? 'bg-primary/10 border-primary text-primary'
+                            : 'bg-muted border-border text-muted-foreground'
+                        }`}>
+                          {i + 1}
+                        </div>
+                        <span className="text-[10px] text-muted-foreground mt-1 whitespace-nowrap max-w-[60px] text-center truncate">
+                          {tp}
+                        </span>
+                      </div>
+                      {!isLast && (
+                        <div className={`w-8 h-0.5 ${isCompleted ? 'bg-primary' : 'bg-border'}`} />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              {journey.outcome && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  Outcome: <span className="font-medium text-foreground">{journey.outcome}</span>
+                  {journey.daysToClient && ` (${journey.daysToClient} days to close)`}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex gap-2 pt-2 border-t border-border">
+            <button
+              onClick={() => showToast(`Calling ${lead.name}...`)}
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium"
+            >
+              <Phone className="w-4 h-4" />
+              Call
+            </button>
+            <button
+              onClick={() => showToast(`Opening email draft for ${lead.name}...`)}
+              className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg text-sm font-medium"
+            >
+              <Mail className="w-4 h-4" />
+              Email
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body
   );
 }
 
@@ -343,7 +728,7 @@ function TVPerformanceTab() {
             <div key={geo.city} className="flex items-center gap-4">
               <div className="w-24 text-sm font-medium">{geo.city}</div>
               <div className="flex-1 bg-muted rounded-full h-6 overflow-hidden">
-                <div 
+                <div
                   className="h-full bg-primary flex items-center justify-end px-2"
                   style={{ width: `${geo.pct}%` }}
                 >
@@ -364,8 +749,8 @@ function TVPerformanceTab() {
             <XAxis type="number" />
             <YAxis type="category" dataKey="topic" width={140} tick={{ fontSize: 12 }} />
             <Tooltip
-              contentStyle={{ 
-                backgroundColor: 'hsl(var(--card))', 
+              contentStyle={{
+                backgroundColor: 'hsl(var(--card))',
                 border: '1px solid hsl(var(--border))',
                 borderRadius: '8px'
               }}
@@ -378,24 +763,45 @@ function TVPerformanceTab() {
   );
 }
 
+interface AlertConfig {
+  name: string;
+  enabled: boolean;
+  desc: string;
+}
+
 function AlertsTab() {
+  const showToast = useToast();
+  const [alerts, setAlerts] = useState<AlertConfig[]>([
+    { name: 'Hot Lead Alert (Slack)', enabled: true, desc: 'Notify when score >= 80' },
+    { name: 'Hot Lead Alert (SMS)', enabled: true, desc: 'Text to +1864XXXXXXX' },
+    { name: 'Daily Summary', enabled: true, desc: 'Email at 9am' },
+    { name: 'Weekly Report', enabled: true, desc: 'Email on Mondays' },
+  ]);
+
+  const toggleAlert = (index: number) => {
+    setAlerts((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], enabled: !next[index].enabled };
+      showToast(`${next[index].name}: ${next[index].enabled ? 'enabled' : 'disabled'}`);
+      return next;
+    });
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">Alert Configuration</h3>
         <div className="bg-card rounded-lg shadow-sm border border-border divide-y divide-border">
-          {[
-            { name: 'Hot Lead Alert (Slack)', enabled: true, desc: 'Notify when score ≥ 80' },
-            { name: 'Hot Lead Alert (SMS)', enabled: true, desc: 'Text to +1864XXXXXXX' },
-            { name: 'Daily Summary', enabled: true, desc: 'Email at 9am' },
-            { name: 'Weekly Report', enabled: true, desc: 'Email on Mondays' },
-          ].map((alert) => (
+          {alerts.map((alert, i) => (
             <div key={alert.name} className="p-4 flex items-center justify-between">
               <div>
                 <p className="font-medium">{alert.name}</p>
                 <p className="text-sm text-muted-foreground">{alert.desc}</p>
               </div>
-              <div className={`w-10 h-6 rounded-full ${alert.enabled ? 'bg-green-500' : 'bg-gray-300'} relative`}>
+              <div
+                onClick={() => toggleAlert(i)}
+                className={`w-10 h-6 rounded-full cursor-pointer transition-colors ${alert.enabled ? 'bg-green-500' : 'bg-gray-300'} relative`}
+              >
                 <div className={`absolute w-4 h-4 bg-white rounded-full top-1 transition-all ${alert.enabled ? 'right-1' : 'left-1'}`} />
               </div>
             </div>
@@ -407,13 +813,15 @@ function AlertsTab() {
         <h3 className="text-lg font-semibold">Recent Alerts</h3>
         <div className="bg-card rounded-lg shadow-sm border border-border divide-y divide-border">
           {[
-            { type: '🔥', msg: 'Hot lead: Robert Anderson (94)', time: '22 min ago' },
-            { type: '📈', msg: 'Traffic spike detected after TV spot', time: '35 min ago' },
-            { type: '🔥', msg: 'Hot lead: Patricia Williams (87)', time: '1.5 hr ago' },
-            { type: '✅', msg: 'Weekly report sent', time: 'Yesterday' },
+            { type: 'hot', msg: 'Hot lead: Robert Anderson (94)', time: '22 min ago' },
+            { type: 'spike', msg: 'Traffic spike detected after TV spot', time: '35 min ago' },
+            { type: 'hot', msg: 'Hot lead: Patricia Williams (87)', time: '1.5 hr ago' },
+            { type: 'report', msg: 'Weekly report sent', time: 'Yesterday' },
           ].map((alert, i) => (
             <div key={i} className="p-4 flex items-start gap-3">
-              <span className="text-xl">{alert.type}</span>
+              <span className="text-xl">
+                {alert.type === 'hot' ? '🔥' : alert.type === 'spike' ? '📈' : '✅'}
+              </span>
               <div className="flex-1">
                 <p className="text-sm">{alert.msg}</p>
                 <p className="text-xs text-muted-foreground">{alert.time}</p>
