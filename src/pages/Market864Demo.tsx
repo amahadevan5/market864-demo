@@ -80,13 +80,11 @@ export function Market864Demo() {
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-accent to-emerald-400 rounded-lg flex items-center justify-center">
-                  <Tv className="w-5 h-5 text-white" />
+                <div onClick={() => switchTab('overview')} className="w-12 h-12 bg-gradient-to-br from-emerald-700 to-emerald-500 rounded-xl flex flex-col items-center justify-center leading-none border border-white/15 shadow-[0_2px_8px_rgba(16,185,129,0.3)] transition-all duration-200 hover:scale-105 hover:shadow-[0_4px_14px_rgba(16,185,129,0.45)] cursor-pointer" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>
+                  <span className="text-[9px] font-bold tracking-[0.12em] text-white uppercase pl-[0.20em]">Market</span>
+                  <span className="text-[20px] font-bold tracking-tight text-white mt-px">864</span>
                 </div>
-                <div>
-                  <h1 className="text-page-title text-foreground">Market864</h1>
-                  <p className="text-sm text-muted-foreground">TV Attribution Dashboard • WYFF4 Campaign</p>
-                </div>
+                <p className="text-sm text-muted-foreground">TV Attribution Dashboard • WYFF4 Campaign</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
