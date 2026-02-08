@@ -9,7 +9,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, AreaChart, Area, Legend
 } from 'recharts';
-import { Tv, Users, Target, TrendingUp, Clock, Flame, ThermometerSun, DollarSign, X, Phone, Mail } from 'lucide-react';
+import { Tv, Users, Target, TrendingUp, Clock, Flame, ThermometerSun, DollarSign, X, Phone, Mail, Sun, Moon } from 'lucide-react';
 import * as demo from '../data/williamsWealthDemo';
 import { useToast } from '../components/ToastProvider';
 
@@ -24,6 +24,22 @@ function getInitialTab(): TabId {
 
 export function Market864Demo() {
   const [activeTab, setActiveTab] = useState<TabId>(getInitialTab);
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    // CSS defaults body to .dark — ensure <html> matches
+    if (!document.documentElement.classList.contains('dark')) {
+      document.documentElement.classList.add('dark');
+    }
+    return 'dark';
+  });
+
+  const toggleTheme = useCallback(() => {
+    setTheme((prev) => {
+      const next = prev === 'dark' ? 'light' : 'dark';
+      document.documentElement.classList.toggle('dark');
+      document.body.classList.toggle('dark');
+      return next;
+    });
+  }, []);
 
   const switchTab = useCallback((tab: TabId) => {
     setActiveTab(tab);
@@ -53,6 +69,13 @@ export function Market864Demo() {
               <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium dark:bg-green-900/30 dark:text-green-400">
                 Live Demo
               </span>
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                aria-label="Toggle theme"
+              >
+                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </button>
             </div>
           </div>
 
