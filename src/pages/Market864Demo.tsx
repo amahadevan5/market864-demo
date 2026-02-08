@@ -10,7 +10,7 @@ import {
   PieChart, Pie, Cell, AreaChart, Area, Legend,
   ReferenceLine, ReferenceArea
 } from 'recharts';
-import { Tv, Users, Target, TrendingUp, Clock, Flame, ThermometerSun, DollarSign, X, Phone, Mail, Sun, Moon } from 'lucide-react';
+import { Tv, Users, Target, TrendingUp, Clock, Flame, ThermometerSun, DollarSign, X, Phone, Mail, Database, Award } from 'lucide-react';
 import * as demo from '../data/williamsWealthDemo';
 import { useToast } from '../components/ToastProvider';
 
@@ -25,22 +25,9 @@ function getInitialTab(): TabId {
 
 export function Market864Demo() {
   const [activeTab, setActiveTab] = useState<TabId>(getInitialTab);
-  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
-    // CSS defaults body to .dark — ensure <html> matches
-    if (!document.documentElement.classList.contains('dark')) {
-      document.documentElement.classList.add('dark');
-    }
-    return 'dark';
-  });
+  const [dataMode, setDataMode] = useState<'demo' | 'real'>('demo');
 
-  const toggleTheme = useCallback(() => {
-    setTheme((prev) => {
-      const next = prev === 'dark' ? 'light' : 'dark';
-      document.documentElement.classList.toggle('dark');
-      document.body.classList.toggle('dark');
-      return next;
-    });
-  }, []);
+  const toggleDataMode = useCallback(() => setDataMode(prev => prev === 'demo' ? 'real' : 'demo'), []);
 
   const switchTab = useCallback((tab: TabId) => {
     setActiveTab(tab);
@@ -67,15 +54,21 @@ export function Market864Demo() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium dark:bg-green-900/30 dark:text-green-400">
-                Live Demo
-              </span>
               <button
-                onClick={toggleTheme}
-                className="p-2 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-                aria-label="Toggle theme"
+                onClick={toggleDataMode}
+                className="relative flex items-center bg-muted rounded-full p-0.5 w-[180px] h-8 border border-border"
+                aria-label="Toggle data mode"
               >
-                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                <div
+                  className="absolute h-7 rounded-full bg-primary transition-all duration-200 ease-in-out"
+                  style={{ width: 'calc(50% - 2px)', left: dataMode === 'demo' ? '2px' : 'calc(50%)' }}
+                />
+                <span className={`relative z-10 flex-1 text-xs font-medium text-center transition-colors ${dataMode === 'demo' ? 'text-primary-foreground' : 'text-muted-foreground'}`}>
+                  Demo Data
+                </span>
+                <span className={`relative z-10 flex-1 text-xs font-medium text-center transition-colors ${dataMode === 'real' ? 'text-primary-foreground' : 'text-muted-foreground'}`}>
+                  Your Data
+                </span>
               </button>
             </div>
           </div>
@@ -91,13 +84,18 @@ export function Market864Demo() {
               <button
                 key={tab.id}
                 onClick={() => switchTab(tab.id)}
-                className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+                className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors flex items-center gap-1.5 ${
                   activeTab === tab.id
                     ? 'bg-background text-foreground border border-border border-b-background -mb-px'
                     : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                 }`}
               >
                 {tab.label}
+                {tab.id === 'alerts' && dataMode === 'real' && (
+                  <span className="px-1.5 py-0.5 text-[10px] font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 rounded">
+                    Preview
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -106,18 +104,19 @@ export function Market864Demo() {
 
       {/* Content */}
       <div className="container mx-auto px-6 py-6">
-        {activeTab === 'overview' && <OverviewTab />}
-        {activeTab === 'leads' && <LeadsTab />}
-        {activeTab === 'tv' && <TVPerformanceTab />}
-        {activeTab === 'alerts' && <AlertsTab />}
+        {activeTab === 'overview' && <OverviewTab dataMode={dataMode} />}
+        {activeTab === 'leads' && <LeadsTab dataMode={dataMode} />}
+        {activeTab === 'tv' && <TVPerformanceTab dataMode={dataMode} />}
+        {activeTab === 'alerts' && <AlertsTab dataMode={dataMode} />}
       </div>
     </div>
   );
 }
 
-function OverviewTab() {
+function OverviewTab({ dataMode }: { dataMode: 'demo' | 'real' }) {
   const showToast = useToast();
   const [projectedLeads, setProjectedLeads] = useState(demo.kpiMetrics.tvAttributedLeads);
+  const isReal = dataMode === 'real';
 
   return (
     <div className="space-y-6">
@@ -128,179 +127,331 @@ function OverviewTab() {
           value={demo.metrics.attributed_leads}
           subtitle={`${demo.metrics.attribution_rate}% attribution rate`}
           icon={<Tv className="w-5 h-5" />}
-          trend={+12}
+          trend={isReal ? undefined : +12}
         />
         <KPICard
           title="Hot Leads"
           value={demo.metrics.hot_leads}
           subtitle="Score 80+"
           icon={<Flame className="w-5 h-5" />}
-          trend={+25}
+          trend={isReal ? undefined : +25}
+          requires={isReal ? 'Scoring engine' : undefined}
         />
         <KPICard
           title="New Clients"
           value={demo.metrics.conversions}
           subtitle={`${demo.metrics.conversion_rate}% conversion`}
           icon={<Users className="w-5 h-5" />}
-          trend={+50}
+          trend={isReal ? undefined : +50}
         />
         <KPICard
           title="TV ROI"
           value={`${demo.metrics.tv_roi}x`}
           subtitle="Return on TV spend"
           icon={<DollarSign className="w-5 h-5" />}
-          trend={+18}
+          trend={isReal ? undefined : +18}
+          requires={isReal ? 'Cost data from TV station' : undefined}
         />
       </div>
 
-      {/* Charts Row 1 */}
+      {/* (G) Yearly Growth Trend — REAL data, same in both modes */}
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+        <h3 className="text-lg font-semibold mb-1">Contact Growth Trend</h3>
+        <p className="text-sm text-muted-foreground mb-4">New contacts per year — 2026 projected</p>
+        <ResponsiveContainer width="100%" height={220}>
+          <AreaChart data={demo.yearlyGrowth}>
+            <XAxis dataKey="year" tick={{ fontSize: 12 }} />
+            <YAxis tick={{ fontSize: 12 }} />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: 'hsl(var(--card))',
+                border: '1px solid hsl(var(--border))',
+                borderRadius: '8px'
+              }}
+            />
+            <Area
+              type="monotone"
+              dataKey="contacts"
+              name="Contacts"
+              stroke="#5A9BD5"
+              fill="#5A9BD5"
+              fillOpacity={0.2}
+              strokeWidth={2}
+              strokeDasharray={undefined}
+            />
+            {/* Mark 2026 projected with annotation */}
+            <ReferenceLine x="2026" stroke="#94A3B8" strokeDasharray="4 4" label={{ value: 'Projected', position: 'top', fontSize: 11, fill: '#94A3B8' }} />
+            {/* TV campaign start */}
+            <ReferenceLine x="2024" stroke="#10B981" strokeDasharray="4 4" label={{ value: 'TV Start', position: 'insideTopRight', fontSize: 10, fill: '#10B981' }} />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Charts Row 1: Weekly Performance (2/3) | Lead Sources + Tier Dist (1/3) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Weekly Performance */}
         <div className="lg:col-span-2 bg-card rounded-lg shadow-sm border border-border p-6">
           <h3 className="text-lg font-semibold mb-4">Weekly TV Spot Performance</h3>
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={demo.weeklySpots}>
-              <XAxis dataKey="week" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'hsl(var(--card))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '8px'
-                }}
-              />
-              <Legend />
-              <Bar dataKey="visits" name="Website Visits" fill="#94A3B8" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="leads" name="TV Attributed Leads" fill="#5A9BD5" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          {isReal ? (
+            <RequiresDataSource source="Google Analytics + Wealthbox API" height="260px" />
+          ) : (
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={demo.weeklySpots}>
+                <XAxis dataKey="week" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px'
+                  }}
+                />
+                <Legend />
+                <Bar dataKey="visits" name="Website Visits" fill="#94A3B8" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="leads" name="TV Attributed Leads" fill="#5A9BD5" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </div>
 
-        {/* Attribution Sources */}
-        <div className="bg-card rounded-lg shadow-sm border border-border p-6">
-          <h3 className="text-lg font-semibold mb-4">Lead Sources</h3>
-          <ResponsiveContainer width="100%" height={200}>
-            <PieChart>
-              <Pie
-                data={demo.attributionSources}
-                cx="50%"
-                cy="50%"
-                innerRadius={40}
-                outerRadius={70}
-                dataKey="value"
-              >
-                {demo.attributionSources.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="space-y-1 mt-2">
-            {demo.attributionSources.slice(0, 4).map((item) => (
-              <div key={item.name} className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
-                  <span className="text-muted-foreground truncate max-w-[120px]">{item.name}</span>
+        {/* Right Column: Lead Sources + (B) Client Tier Distribution */}
+        <div className="space-y-6">
+          {/* Attribution Sources — REAL data, same in both modes */}
+          <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+            <h3 className="text-lg font-semibold mb-4">Lead Sources</h3>
+            <ResponsiveContainer width="100%" height={200}>
+              <PieChart>
+                <Pie
+                  data={demo.attributionSources}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={40}
+                  outerRadius={70}
+                  dataKey="value"
+                >
+                  {demo.attributionSources.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="space-y-1 mt-2">
+              {demo.attributionSources.slice(0, 4).map((item) => (
+                <div key={item.name} className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
+                    <span className="text-muted-foreground truncate max-w-[120px]">{item.name}</span>
+                  </div>
+                  <span className="font-medium">{item.value}%</span>
                 </div>
-                <span className="font-medium">{item.value}%</span>
-              </div>
-            ))}
+              ))}
+            </div>
+          </div>
+
+          {/* (B) Client Tier Distribution — REAL data, same in both modes */}
+          <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+            <h3 className="text-sm font-semibold mb-3">Client Tier Distribution</h3>
+            <ResponsiveContainer width="100%" height={140}>
+              <PieChart>
+                <Pie
+                  data={demo.clientTiers}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={30}
+                  outerRadius={55}
+                  dataKey="count"
+                  nameKey="tier"
+                >
+                  {demo.clientTiers.map((entry, index) => (
+                    <Cell key={`tier-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="space-y-1 mt-2">
+              {demo.clientTiers.map((tier) => (
+                <div key={tier.tier} className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: tier.color }} />
+                    <span className="text-muted-foreground">{tier.tier}</span>
+                  </div>
+                  <span className="font-medium">{tier.count}</span>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              TV→Tier 1: <span className="font-medium text-green-600">60%</span> vs 12.6% avg
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Charts Row 2 */}
+      {/* (A) Baseline Lift Analysis (1/2) | Funnel (1/2) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Traffic After TV Spot */}
+        {/* (A) Baseline Lift Analysis — replaces "Traffic After TV Spot" */}
         <div className="bg-card rounded-lg shadow-sm border border-border p-6">
-          <h3 className="text-lg font-semibold mb-1">Traffic After TV Spot</h3>
-          <p className="text-sm text-muted-foreground mb-4">Website visits spike within the attribution window after 4:30pm airing</p>
-          <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={demo.hourlyTraffic}>
-              <XAxis dataKey="hour" tick={{ fontSize: 10 }} />
-              <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'hsl(var(--card))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '8px'
-                }}
-              />
-              <ReferenceArea x1="4:30pm" x2="7pm" fill="#5A9BD5" fillOpacity={0.08} />
-              <ReferenceLine x="4:30pm" stroke="#5A9BD5" strokeDasharray="4 4" label={{ value: 'TV Spot', position: 'top', fontSize: 11, fill: '#5A9BD5' }} />
-              <Area type="monotone" dataKey="visits" name="Visits" stroke="#5A9BD5" fill="#5A9BD5" fillOpacity={0.5} />
-            </AreaChart>
-          </ResponsiveContainer>
+          <h3 className="text-lg font-semibold mb-1">Baseline Lift Analysis</h3>
+          <p className="text-sm text-muted-foreground mb-3">Predicted baseline vs actual traffic after 4:30pm airing</p>
+          {isReal ? (
+            <RequiresDataSource source="Google Analytics" height="220px" />
+          ) : (
+            <>
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 text-center">
+                  <p className="text-lg font-bold text-blue-600">+{demo.liftSummary.liftPercent}%</p>
+                  <p className="text-[10px] text-muted-foreground">Lift</p>
+                </div>
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 text-center">
+                  <p className="text-lg font-bold text-blue-600">{demo.liftSummary.incrementalVisits}</p>
+                  <p className="text-[10px] text-muted-foreground">Incremental Visits/Wk</p>
+                </div>
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 text-center">
+                  <p className="text-lg font-bold text-blue-600">{demo.liftSummary.peakMultiple}x</p>
+                  <p className="text-[10px] text-muted-foreground">Peak vs Baseline</p>
+                </div>
+              </div>
+              <ResponsiveContainer width="100%" height={200}>
+                <AreaChart data={demo.baselineLiftData}>
+                  <XAxis dataKey="time" tick={{ fontSize: 10 }} />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px'
+                    }}
+                  />
+                  <ReferenceArea x1="4:30" x2="7:00" fill="#5A9BD5" fillOpacity={0.06} />
+                  <ReferenceLine x="4:30" stroke="#5A9BD5" strokeDasharray="4 4" label={{ value: 'TV Spot', position: 'top', fontSize: 10, fill: '#5A9BD5' }} />
+                  <Area type="monotone" dataKey="baseline" name="Predicted Baseline" stroke="#94A3B8" fill="none" strokeDasharray="6 3" strokeWidth={2} />
+                  <Area type="monotone" dataKey="actual" name="Actual Traffic" stroke="#5A9BD5" fill="#5A9BD5" fillOpacity={0.3} strokeWidth={2} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </>
+          )}
         </div>
 
         {/* Conversion Funnel */}
         <div className="bg-card rounded-lg shadow-sm border border-border p-6">
           <h3 className="text-lg font-semibold mb-4">Attribution Funnel</h3>
-          <div className="space-y-2">
-            {demo.funnel.map((item, _) => {
-              const maxValue = demo.funnel[0].value;
-              const widthPercent = Math.max(15, (item.value / maxValue) * 100);
-              return (
-                <div key={item.stage} className="relative">
-                  <div
-                    className="h-8 rounded flex items-center justify-between px-3 text-white text-sm"
-                    style={{
-                      width: `${widthPercent}%`,
-                      backgroundColor: item.color,
-                      minWidth: '150px',
-                    }}
-                  >
-                    <span className="truncate">{item.stage}</span>
-                    <span className="font-bold">{item.value.toLocaleString()}</span>
+          {isReal ? (
+            <RequiresDataSource source="Google Analytics" height="180px" />
+          ) : (
+            <div className="space-y-2">
+              {demo.funnel.map((item) => {
+                const maxValue = demo.funnel[0].value;
+                const widthPercent = Math.max(15, (item.value / maxValue) * 100);
+                return (
+                  <div key={item.stage} className="relative">
+                    <div
+                      className="h-8 rounded flex items-center justify-between px-3 text-white text-sm"
+                      style={{
+                        width: `${widthPercent}%`,
+                        backgroundColor: item.color,
+                        minWidth: '150px',
+                      }}
+                    >
+                      <span className="truncate">{item.stage}</span>
+                      <span className="font-bold">{item.value.toLocaleString()}</span>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
+      </div>
+
+      {/* (C) AUM Pipeline Tracker — full width */}
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+        <h3 className="text-lg font-semibold mb-1">AUM Pipeline Tracker</h3>
+        <p className="text-sm text-muted-foreground mb-4">TV-attributed assets under management through the pipeline</p>
+        {isReal ? (
+          <RequiresDataSource source="Wealthbox AUM data + Cost data from TV station" height="220px" />
+        ) : (
+          <>
+            <div className="grid grid-cols-3 gap-4 mb-4">
+              <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center">
+                <p className="text-lg font-bold text-green-600">${(demo.aumMetrics.totalPipelineAUM / 1e6).toFixed(1)}M</p>
+                <p className="text-[10px] text-muted-foreground">Pipeline AUM</p>
+              </div>
+              <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center">
+                <p className="text-lg font-bold text-green-600">${(demo.aumMetrics.weightedPipelineAUM / 1e6).toFixed(1)}M</p>
+                <p className="text-[10px] text-muted-foreground">Weighted Pipeline</p>
+              </div>
+              <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center">
+                <p className="text-lg font-bold text-green-600">${demo.aumMetrics.aumPerTVDollar}</p>
+                <p className="text-[10px] text-muted-foreground">AUM per TV $1</p>
+              </div>
+            </div>
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart data={demo.aumPipeline} layout="vertical">
+                <XAxis type="number" tickFormatter={(v: number) => `$${(v / 1e6).toFixed(1)}M`} tick={{ fontSize: 11 }} />
+                <YAxis type="category" dataKey="stage" width={150} tick={{ fontSize: 12 }} />
+                <Tooltip
+                  formatter={(value: number) => [`$${value.toLocaleString()}`, 'AUM']}
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px'
+                  }}
+                />
+                <Bar dataKey="aum" name="AUM" fill="#10B981" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </>
+        )}
       </div>
 
       {/* Latest Hot Lead */}
-      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Latest Hot Lead</h3>
-          <span className="text-sm text-muted-foreground">22 minutes ago</span>
+      {isReal ? (
+        <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+          <h3 className="text-lg font-semibold mb-4">Latest Hot Lead</h3>
+          <RequiresDataSource source="Live Wealthbox API + Scoring engine" height="120px" />
         </div>
-        <div className="flex items-center gap-6">
-          <div className="flex items-center justify-center w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30">
-            <span className="text-3xl font-bold text-green-600">94</span>
+      ) : (
+        <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Latest Hot Lead</h3>
+            <span className="text-sm text-muted-foreground">22 minutes ago</span>
           </div>
-          <div className="flex-1">
-            <h4 className="text-xl font-semibold">Robert Anderson</h4>
-            <p className="text-muted-foreground">Topic: Retirement Planning</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              Source: Mike Giordano @ WYFF News 4 • Greenville, SC
-            </p>
-            <div className="flex gap-2 mt-3">
-              <button
-                onClick={() => showToast('Calling Robert Anderson...')}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium"
-              >
-                Call Now
-              </button>
-              <button
-                onClick={() => showToast('Opening CRM record...')}
-                className="px-4 py-2 border border-border rounded-lg text-sm font-medium"
-              >
-                View in CRM
-              </button>
+          <div className="flex items-center gap-6">
+            <div className="flex items-center justify-center w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30">
+              <span className="text-3xl font-bold text-green-600">94</span>
+            </div>
+            <div className="flex-1">
+              <h4 className="text-xl font-semibold">Robert Anderson</h4>
+              <p className="text-muted-foreground">Topic: Retirement Planning</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Source: Mike Giordano @ WYFF News 4 • Greenville, SC
+              </p>
+              <div className="flex gap-2 mt-3">
+                <button
+                  onClick={() => showToast('Calling Robert Anderson...')}
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium"
+                >
+                  Call Now
+                </button>
+                <button
+                  onClick={() => showToast('Opening CRM record...')}
+                  className="px-4 py-2 border border-border rounded-lg text-sm font-medium"
+                >
+                  View in CRM
+                </button>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-muted-foreground">Time since TV spot:</p>
+              <p className="text-2xl font-bold text-primary">22 min</p>
+              <p className="text-xs text-green-600 mt-1">Within attribution window</p>
             </div>
           </div>
-          <div className="text-right">
-            <p className="text-sm text-muted-foreground">Time since TV spot:</p>
-            <p className="text-2xl font-bold text-primary">22 min</p>
-            <p className="text-xs text-green-600 mt-1">Within attribution window</p>
-          </div>
         </div>
-      </div>
+      )}
 
-      {/* ROI Projection Panel */}
+      {/* ROI Projection Panel — uses real 60% rate, same in both modes */}
       <div className="bg-card rounded-lg shadow-sm border border-border p-6">
         <h3 className="text-lg font-semibold mb-1">What If You Captured More TV Leads?</h3>
         <p className="text-sm text-muted-foreground mb-5">TV Attribution Opportunity</p>
@@ -364,7 +515,105 @@ const CATEGORY_COLORS: Record<string, string> = {
   qualification: '#EC4899',
 };
 
-function LeadsTab() {
+function LeadsTab({ dataMode }: { dataMode: 'demo' | 'real' }) {
+  if (dataMode === 'real') return <RealLeadsView />;
+
+  return <DemoLeadsView />;
+}
+
+function RealLeadsView() {
+  const journeys = demo.tvAttributionDetails.journeyExamples;
+  const summary = demo.tvAttributionDetails.summary;
+
+  return (
+    <div className="space-y-4">
+      {/* Summary Header */}
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+        <h3 className="text-lg font-semibold mb-1">
+          {summary.totalTVLeads} TV-attributed leads tracked in Wealthbox ({summary.convertedToTier1} converted to Tier 1)
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          Lead scoring segments require: <span className="text-foreground font-medium">Scoring engine deployment</span>
+        </p>
+      </div>
+
+      {/* Journey Cards */}
+      <div className="space-y-3">
+        {journeys.map((journey) => {
+          const isTier1 = journey.outcome === 'Tier 1 Client';
+          return (
+            <div key={journey.id} className="bg-card rounded-lg shadow-sm border border-border p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-mono text-muted-foreground">{journey.id}</span>
+                  <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                    isTier1
+                      ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                      : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                  }`}>
+                    {journey.outcome}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4 text-sm">
+                <div>
+                  <p className="text-xs text-muted-foreground">Source</p>
+                  <p className="font-medium">{journey.source}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Created</p>
+                  <p className="font-medium">{journey.created}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">State</p>
+                  <p className="font-medium">{journey.state}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Days to Meeting / Client</p>
+                  <p className="font-medium">
+                    {journey.daysToMeeting != null ? `${journey.daysToMeeting}d` : '—'}
+                    {' / '}
+                    {journey.daysToClient != null ? `${journey.daysToClient}d` : '—'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Touchpoint Timeline */}
+              <div className="flex items-center gap-0 overflow-x-auto pb-1">
+                {journey.touchpoints.map((tp, i) => {
+                  const isCompleted = isTier1 || i < journey.touchpoints.length - 1;
+                  const isLast = i === journey.touchpoints.length - 1;
+                  return (
+                    <div key={i} className="flex items-center">
+                      <div className="flex flex-col items-center">
+                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-medium border-2 ${
+                          isCompleted
+                            ? 'bg-primary/10 border-primary text-primary'
+                            : 'bg-muted border-border text-muted-foreground'
+                        }`}>
+                          {i + 1}
+                        </div>
+                        <span className="text-[10px] text-muted-foreground mt-1 whitespace-nowrap max-w-[56px] text-center truncate">
+                          {tp}
+                        </span>
+                      </div>
+                      {!isLast && (
+                        <div className={`w-6 h-0.5 ${isCompleted ? 'bg-primary' : 'bg-border'}`} />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function DemoLeadsView() {
   const showToast = useToast();
   const [segmentFilter, setSegmentFilter] = useState<SegmentFilter>('all');
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>('all');
@@ -828,10 +1077,20 @@ function LeadDetailModal({ lead, onClose }: { lead: typeof demo.recentLeads[0]; 
   );
 }
 
-function TVPerformanceTab() {
+function TVPerformanceTab({ dataMode }: { dataMode: 'demo' | 'real' }) {
+  const isReal = dataMode === 'real';
+  const tvCampaign = demo.campaignPerformance.find(c => c.channel === 'TV')!;
+
+  const gradeColors: Record<string, string> = {
+    Best: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+    Good: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    Avg: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
+    Low: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+  };
+
   return (
     <div className="space-y-6">
-      {/* Campaign Info */}
+      {/* Campaign Info — REAL data, same in both modes */}
       <div className="bg-card rounded-lg shadow-sm border border-border p-6">
         <h3 className="text-lg font-semibold mb-4">Active Campaign</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -854,7 +1113,7 @@ function TVPerformanceTab() {
         </div>
       </div>
 
-      {/* Attribution Windows */}
+      {/* Attribution Windows — REAL data, same in both modes */}
       <div className="bg-card rounded-lg shadow-sm border border-border p-6">
         <h3 className="text-lg font-semibold mb-1">Attribution Windows</h3>
         <p className="text-sm text-muted-foreground mb-4">Confidence weight decays over time after TV spot</p>
@@ -899,20 +1158,46 @@ function TVPerformanceTab() {
               </tr>
             </thead>
             <tbody>
-              {demo.campaignPerformance.map((camp) => (
-                <tr key={camp.id} className={camp.channel === 'TV' ? 'border-l-2 border-l-primary' : ''}>
-                  <td className="font-medium">{camp.channel}</td>
-                  <td>{camp.name}</td>
-                  <td>{camp.leads}</td>
-                  <td>{camp.meetings}</td>
-                  <td>{camp.clients}</td>
-                  <td>${camp.cost.toLocaleString()}</td>
-                  <td>${camp.cpl}</td>
-                  <td className={`font-bold ${camp.roi >= 5 ? 'text-green-500' : 'text-muted-foreground'}`}>
-                    {camp.roi}x
-                  </td>
-                </tr>
-              ))}
+              {/* TV row — always real data */}
+              <tr className="border-l-2 border-l-primary">
+                <td className="font-medium">{tvCampaign.channel}</td>
+                <td>{tvCampaign.name}</td>
+                <td>{tvCampaign.leads}</td>
+                <td>{tvCampaign.meetings}</td>
+                <td>{tvCampaign.clients}</td>
+                <td>${tvCampaign.cost.toLocaleString()}</td>
+                <td>${tvCampaign.cpl}</td>
+                <td className="font-bold text-green-500">{tvCampaign.roi}x</td>
+              </tr>
+              {isReal ? (
+                <>
+                  {demo.campaignPerformance.filter(c => c.channel !== 'TV').map((camp) => (
+                    <tr key={camp.id}>
+                      <td className="font-medium text-muted-foreground">{camp.channel}</td>
+                      <td colSpan={7} className="text-sm text-muted-foreground italic">
+                        Requires: Ad platform integration
+                      </td>
+                    </tr>
+                  ))}
+                </>
+              ) : (
+                <>
+                  {demo.campaignPerformance.filter(c => c.channel !== 'TV').map((camp) => (
+                    <tr key={camp.id}>
+                      <td className="font-medium">{camp.channel}</td>
+                      <td>{camp.name}</td>
+                      <td>{camp.leads}</td>
+                      <td>{camp.meetings}</td>
+                      <td>{camp.clients}</td>
+                      <td>${camp.cost.toLocaleString()}</td>
+                      <td>${camp.cpl}</td>
+                      <td className={`font-bold ${camp.roi >= 5 ? 'text-green-500' : 'text-muted-foreground'}`}>
+                        {camp.roi}x
+                      </td>
+                    </tr>
+                  ))}
+                </>
+              )}
             </tbody>
           </table>
         </div>
@@ -921,7 +1206,216 @@ function TVPerformanceTab() {
         </p>
       </div>
 
-      {/* Geographic Breakdown */}
+      {/* (I) Spot-Level Performance */}
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+        <h3 className="text-lg font-semibold mb-4">Spot-Level Performance</h3>
+        {isReal ? (
+          <RequiresDataSource source="Google Analytics + TV station logs" height="220px" />
+        ) : (
+          <div className="table-container">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Impressions</th>
+                  <th>15-min Responses</th>
+                  <th>Response Rate</th>
+                  <th>Leads</th>
+                  <th>CPL</th>
+                  <th>Grade</th>
+                </tr>
+              </thead>
+              <tbody>
+                {demo.spotPerformance.map((spot) => (
+                  <tr key={spot.date}>
+                    <td className="font-medium">{spot.date}</td>
+                    <td>{spot.impressions.toLocaleString()}</td>
+                    <td>{spot.responses15m}</td>
+                    <td>{(spot.responseRate * 100).toFixed(1)}%</td>
+                    <td>{spot.leads}</td>
+                    <td>{spot.cpl != null ? `$${spot.cpl}` : '—'}</td>
+                    <td>
+                      <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${gradeColors[spot.grade]}`}>
+                        {spot.grade}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* (D) Client LTV by Channel (1/2) | (E) Time-to-Close by Channel (1/2) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* (D) Client LTV by Channel */}
+        <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+          <h3 className="text-lg font-semibold mb-1">Client LTV by Channel</h3>
+          <p className="text-sm text-muted-foreground mb-4">Lifetime value and acquisition cost comparison</p>
+          {isReal ? (
+            <RequiresDataSource source="Wealthbox AUM data + Ad platform integration" height="220px" />
+          ) : (
+            <>
+              <div className="space-y-3">
+                {demo.channelLTV.map((ch) => (
+                  <div key={ch.channel} className="bg-muted/30 rounded-lg p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-semibold">{ch.channel}</span>
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                        ch.channel === 'TV'
+                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                          : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                      }`}>
+                        {ch.ltvCacRatio}:1 LTV:CAC
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-xs">
+                      <div>
+                        <p className="text-muted-foreground">Avg AUM</p>
+                        <p className="font-medium">${(ch.avgAUM / 1000).toFixed(0)}K</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">LTV</p>
+                        <p className="font-medium">${(ch.ltv / 1000).toFixed(0)}K</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">CAC</p>
+                        <p className="font-medium">${ch.cac.toLocaleString()}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground mt-3">
+                TV clients: <span className="font-medium text-green-600">54:1 LTV:CAC</span> — highest quality channel
+              </p>
+            </>
+          )}
+        </div>
+
+        {/* (E) Time-to-Close by Channel */}
+        <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+          <h3 className="text-lg font-semibold mb-1">Time-to-Close by Channel</h3>
+          <p className="text-sm text-muted-foreground mb-4">Days from lead to meeting and meeting to client</p>
+          {isReal ? (
+            <RequiresDataSource source="Wealthbox pipeline timestamps" height="220px" />
+          ) : (
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={demo.channelVelocity} layout="vertical">
+                <XAxis type="number" tick={{ fontSize: 11 }} label={{ value: 'Days', position: 'insideBottomRight', offset: -5, fontSize: 11 }} />
+                <YAxis type="category" dataKey="channel" width={70} tick={{ fontSize: 12 }} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px'
+                  }}
+                />
+                <Legend />
+                <Bar dataKey="daysToMeeting" name="Days to Meeting" fill="#5A9BD5" stackId="a" radius={[0, 0, 0, 0]} />
+                <Bar dataKey="daysToClient" name="Days to Client" fill="#94A3B8" stackId="a" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </div>
+
+      {/* (F) Industry Benchmarks — full width */}
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+        <div className="flex items-center gap-2 mb-1">
+          <Award className="w-5 h-5 text-primary" />
+          <h3 className="text-lg font-semibold">Industry Benchmarks</h3>
+        </div>
+        <p className="text-sm text-muted-foreground mb-4">Market864 performance vs industry averages</p>
+        {isReal ? (
+          <RequiresDataSource source="Industry benchmark subscription" height="260px" />
+        ) : (
+          <div className="space-y-4">
+            {demo.industryBenchmarks.map((bench) => {
+              const oursVal = bench.ours;
+              const indVal = bench.industry;
+              const maxVal = Math.max(oursVal, indVal);
+              const isBetter = bench.lowerIsBetter ? oursVal < indVal : oursVal > indVal;
+              const deltaPct = bench.lowerIsBetter
+                ? Math.round(((indVal - oursVal) / indVal) * 100)
+                : Math.round(((oursVal - indVal) / indVal) * 100);
+              return (
+                <div key={bench.metric}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium">{bench.metric}</span>
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                      isBetter
+                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                        : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                    }`}>
+                      {isBetter ? `${deltaPct}% better` : `${Math.abs(deltaPct)}% behind`}
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground w-20">Market864</span>
+                      <div className="flex-1 bg-muted rounded-full h-4 overflow-hidden">
+                        <div
+                          className="h-full bg-primary rounded-full"
+                          style={{ width: `${(oursVal / maxVal) * 100}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-medium w-16 text-right">{bench.unit === '$' ? `$${oursVal}` : `${oursVal}${bench.unit}`}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground w-20">Industry</span>
+                      <div className="flex-1 bg-muted rounded-full h-4 overflow-hidden">
+                        <div
+                          className="h-full bg-gray-400 rounded-full"
+                          style={{ width: `${(indVal / maxVal) * 100}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-medium w-16 text-right">{bench.unit === '$' ? `$${indVal}` : `${indVal}${bench.unit}`}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* (H) TV Halo Effect — full width */}
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+        <h3 className="text-lg font-semibold mb-1">TV Halo Effect</h3>
+        <p className="text-sm text-muted-foreground mb-4">Performance uplift on TV airing days vs non-TV days</p>
+        {isReal ? (
+          <RequiresDataSource source="Google Analytics + Ad platform integration" height="260px" />
+        ) : (
+          <>
+            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mb-4 text-center">
+              <p className="text-2xl font-bold text-blue-600">{demo.haloMultiplier}x</p>
+              <p className="text-sm text-muted-foreground">
+                Total Halo Multiplier — TV's true impact is {Math.round((demo.haloMultiplier - 1) * 100)}% larger than direct attribution
+              </p>
+            </div>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={demo.haloEffect}>
+                <XAxis dataKey="metric" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px'
+                  }}
+                />
+                <Legend />
+                <Bar dataKey="tvDay" name="TV Airing Days" fill="#5A9BD5" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="nonTvDay" name="Non-TV Days" fill="#94A3B8" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </>
+        )}
+      </div>
+
+      {/* Geographic Breakdown — REAL data, same in both modes */}
       <div className="bg-card rounded-lg shadow-sm border border-border p-6">
         <h3 className="text-lg font-semibold mb-4">Leads by Location</h3>
         <div className="space-y-3">
@@ -945,20 +1439,24 @@ function TVPerformanceTab() {
       {/* Topic Performance */}
       <div className="bg-card rounded-lg shadow-sm border border-border p-6">
         <h3 className="text-lg font-semibold mb-4">Performance by Topic of Interest</h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={demo.topicBreakdown} layout="vertical">
-            <XAxis type="number" />
-            <YAxis type="category" dataKey="topic" width={140} tick={{ fontSize: 12 }} />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: 'hsl(var(--card))',
-                border: '1px solid hsl(var(--border))',
-                borderRadius: '8px'
-              }}
-            />
-            <Bar dataKey="count" name="Leads" fill="#5A9BD5" radius={[0, 4, 4, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
+        {isReal ? (
+          <RequiresDataSource source="CRM topic tagging" height="300px" />
+        ) : (
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={demo.topicBreakdown} layout="vertical">
+              <XAxis type="number" />
+              <YAxis type="category" dataKey="topic" width={140} tick={{ fontSize: 12 }} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'hsl(var(--card))',
+                  border: '1px solid hsl(var(--border))',
+                  borderRadius: '8px'
+                }}
+              />
+              <Bar dataKey="count" name="Leads" fill="#5A9BD5" radius={[0, 4, 4, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
       </div>
     </div>
   );
@@ -970,8 +1468,9 @@ interface AlertConfig {
   desc: string;
 }
 
-function AlertsTab() {
+function AlertsTab({ dataMode }: { dataMode: 'demo' | 'real' }) {
   const showToast = useToast();
+  const isReal = dataMode === 'real';
   const [alerts, setAlerts] = useState<AlertConfig[]>([
     { name: 'Hot Lead Alert (Slack)', enabled: true, desc: 'Notify when score >= 80' },
     { name: 'Hot Lead Alert (SMS)', enabled: true, desc: 'Text to +1864XXXXXXX' },
@@ -989,59 +1488,99 @@ function AlertsTab() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Alert Configuration</h3>
-        <div className="bg-card rounded-lg shadow-sm border border-border divide-y divide-border">
-          {alerts.map((alert, i) => (
-            <div key={alert.name} className="p-4 flex items-center justify-between">
-              <div>
-                <p className="font-medium">{alert.name}</p>
-                <p className="text-sm text-muted-foreground">{alert.desc}</p>
-              </div>
-              <div
-                onClick={() => toggleAlert(i)}
-                className={`w-10 h-6 rounded-full cursor-pointer transition-colors ${alert.enabled ? 'bg-green-500' : 'bg-gray-300'} relative`}
-              >
-                <div className={`absolute w-4 h-4 bg-white rounded-full top-1 transition-all ${alert.enabled ? 'right-1' : 'left-1'}`} />
-              </div>
-            </div>
-          ))}
+    <div className="space-y-6">
+      {isReal && (
+        <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4 flex items-center gap-3">
+          <Database className="w-5 h-5 text-purple-600 dark:text-purple-400 flex-shrink-0" />
+          <p className="text-sm text-purple-700 dark:text-purple-300">
+            <span className="font-medium">Preview</span> — Alert system available after deployment with live data sources
+          </p>
         </div>
-      </div>
-
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Recent Alerts</h3>
-        <div className="bg-card rounded-lg shadow-sm border border-border divide-y divide-border">
-          {[
-            { type: 'hot', msg: 'Hot lead: Robert Anderson (94)', time: '22 min ago' },
-            { type: 'spike', msg: 'Traffic spike detected after TV spot', time: '35 min ago' },
-            { type: 'hot', msg: 'Hot lead: Patricia Williams (87)', time: '1.5 hr ago' },
-            { type: 'report', msg: 'Weekly report sent', time: 'Yesterday' },
-          ].map((alert, i) => (
-            <div key={i} className="p-4 flex items-start gap-3">
-              <span className="text-xl">
-                {alert.type === 'hot' ? '🔥' : alert.type === 'spike' ? '📈' : '✅'}
-              </span>
-              <div className="flex-1">
-                <p className="text-sm">{alert.msg}</p>
-                <p className="text-xs text-muted-foreground">{alert.time}</p>
+      )}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Alert Configuration</h3>
+          <div className="bg-card rounded-lg shadow-sm border border-border divide-y divide-border">
+            {alerts.map((alert, i) => (
+              <div key={alert.name} className="p-4 flex items-center justify-between">
+                <div>
+                  <p className="font-medium">{alert.name}</p>
+                  <p className="text-sm text-muted-foreground">{alert.desc}</p>
+                </div>
+                <div
+                  onClick={() => toggleAlert(i)}
+                  className={`w-10 h-6 rounded-full cursor-pointer transition-colors ${alert.enabled ? 'bg-green-500' : 'bg-gray-300'} relative`}
+                >
+                  <div className={`absolute w-4 h-4 bg-white rounded-full top-1 transition-all ${alert.enabled ? 'right-1' : 'left-1'}`} />
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Recent Alerts</h3>
+          <div className="bg-card rounded-lg shadow-sm border border-border divide-y divide-border">
+            {[
+              { type: 'hot', msg: 'Hot lead: Robert Anderson (94)', time: '22 min ago' },
+              { type: 'spike', msg: 'Traffic spike detected after TV spot', time: '35 min ago' },
+              { type: 'hot', msg: 'Hot lead: Patricia Williams (87)', time: '1.5 hr ago' },
+              { type: 'report', msg: 'Weekly report sent', time: 'Yesterday' },
+            ].map((alert, i) => (
+              <div key={i} className="p-4 flex items-start gap-3">
+                <span className="text-xl">
+                  {alert.type === 'hot' ? '🔥' : alert.type === 'spike' ? '📈' : '✅'}
+                </span>
+                <div className="flex-1">
+                  <p className="text-sm">{alert.msg}</p>
+                  <p className="text-xs text-muted-foreground">{alert.time}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-function KPICard({ title, value, subtitle, icon, trend }: {
+function RequiresDataSource({ source, title, height }: { source: string; title?: string; height?: string }) {
+  return (
+    <div
+      className="border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center text-center p-6"
+      style={{ minHeight: height || '200px' }}
+    >
+      <Database className="w-8 h-8 text-muted-foreground/50 mb-3" />
+      {title && <p className="text-sm font-medium text-muted-foreground mb-1">{title}</p>}
+      <p className="text-sm font-medium text-muted-foreground">Requires: <span className="text-foreground">{source}</span></p>
+      <p className="text-xs text-muted-foreground mt-1">Connect this data source to populate this section</p>
+    </div>
+  );
+}
+
+function KPICard({ title, value, subtitle, icon, trend, requires }: {
   title: string;
   value: string | number;
   subtitle: string;
   icon: React.ReactNode;
   trend?: number;
+  requires?: string;
 }) {
+  if (requires) {
+    return (
+      <div className="bg-card rounded-lg shadow-sm border border-border p-5">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">{title}</p>
+            <p className="text-2xl font-bold mt-1 text-muted-foreground/40">--</p>
+            <p className="text-xs text-muted-foreground mt-1">Requires: {requires}</p>
+          </div>
+          <div className="p-2 bg-muted rounded-lg text-muted-foreground/40">{icon}</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-card rounded-lg shadow-sm border border-border p-5">
       <div className="flex items-start justify-between">

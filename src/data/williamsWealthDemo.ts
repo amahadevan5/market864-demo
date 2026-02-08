@@ -420,6 +420,87 @@ export const hourlyTraffic = hourlyTrafficPattern.map(h => ({
   tvWindow: h.tvWindow || false,
 }));
 
+// Baseline Lift Analysis — minute-level for 3pm-8pm
+export const baselineLiftData = [
+  { time: '3:00', actual: 12, baseline: 12 },
+  { time: '3:15', actual: 13, baseline: 12 },
+  { time: '3:30', actual: 11, baseline: 13 },
+  { time: '3:45', actual: 14, baseline: 13 },
+  { time: '4:00', actual: 15, baseline: 14 },
+  { time: '4:15', actual: 14, baseline: 14 },
+  { time: '4:30', actual: 18, baseline: 14 },
+  { time: '4:45', actual: 45, baseline: 14 },
+  { time: '5:00', actual: 48, baseline: 13 },
+  { time: '5:15', actual: 42, baseline: 13 },
+  { time: '5:30', actual: 38, baseline: 13 },
+  { time: '5:45', actual: 35, baseline: 12 },
+  { time: '6:00', actual: 30, baseline: 12 },
+  { time: '6:15', actual: 28, baseline: 12 },
+  { time: '6:30', actual: 25, baseline: 11 },
+  { time: '6:45', actual: 22, baseline: 11 },
+  { time: '7:00', actual: 18, baseline: 11 },
+  { time: '7:15', actual: 15, baseline: 10 },
+  { time: '7:30', actual: 12, baseline: 10 },
+  { time: '7:45', actual: 10, baseline: 10 },
+  { time: '8:00', actual: 9, baseline: 10 },
+];
+export const liftSummary = { liftPercent: 275, incrementalVisits: 95, peakMultiple: 3.2 };
+
+// AUM Pipeline — dollar-value funnel stages
+export const aumPipeline = [
+  { stage: 'TV-Attributed Leads', aum: 1800000, count: 5 },
+  { stage: 'Meetings Held', aum: 1200000, count: 3 },
+  { stage: 'Proposals Sent', aum: 1050000, count: 2 },
+  { stage: 'Clients Won', aum: 1050000, count: 2 },
+];
+export const aumMetrics = {
+  totalPipelineAUM: 1800000,
+  weightedPipelineAUM: 1100000,
+  aumPerTVDollar: 720,
+};
+
+// Channel LTV — lifetime value comparison by channel
+export const channelLTV = [
+  { channel: 'TV', avgAUM: 850000, ltv: 68000, cac: 1250, ltvCacRatio: 54, paybackMonths: 2.2 },
+  { channel: 'Referral', avgAUM: 720000, ltv: 57600, cac: 167, ltvCacRatio: 345, paybackMonths: 0.3 },
+  { channel: 'Digital', avgAUM: 420000, ltv: 33600, cac: 1800, ltvCacRatio: 19, paybackMonths: 6.4 },
+];
+
+// Channel Velocity — days-to-close per channel
+export const channelVelocity = [
+  { channel: 'TV', daysToMeeting: 4, daysToClient: 38 },
+  { channel: 'Referral', daysToMeeting: 7, daysToClient: 52 },
+  { channel: 'Digital', daysToMeeting: 12, daysToClient: 75 },
+  { channel: 'Internet', daysToMeeting: 15, daysToClient: 90 },
+];
+
+// Industry Benchmarks — paired comparison data
+export const industryBenchmarks = [
+  { metric: 'Cost Per Lead', ours: 500, industry: 653, unit: '$', lowerIsBetter: true },
+  { metric: 'TV→Client Conv.', ours: 60, industry: 25, unit: '%', lowerIsBetter: false },
+  { metric: 'ROI', ours: 8.4, industry: 3.2, unit: 'x', lowerIsBetter: false },
+  { metric: 'Time to Meeting', ours: 4.2, industry: 14, unit: 'days', lowerIsBetter: true },
+  { metric: 'Client Retention', ours: 97, industry: 90, unit: '%', lowerIsBetter: false },
+];
+
+// TV Halo Effect — TV vs non-TV day comparisons
+export const haloEffect = [
+  { metric: 'Organic Traffic', tvDay: 162, nonTvDay: 120, liftPct: 35 },
+  { metric: 'Google Ads CTR', tvDay: 4.9, nonTvDay: 4.0, liftPct: 22 },
+  { metric: 'Referral Mentions TV', tvDay: 18, nonTvDay: 0, liftPct: null },
+  { metric: 'Form Submissions', tvDay: 3.2, nonTvDay: 1.8, liftPct: 78 },
+];
+export const haloMultiplier = 1.4;
+
+// Spot-Level Performance — per-airing detail
+export const spotPerformance = [
+  { date: 'Feb 3', impressions: 47000, responses15m: 48, responseRate: 0.102, leads: 2, cpl: 125, grade: 'Best' as const },
+  { date: 'Jan 27', impressions: 45000, responses15m: 42, responseRate: 0.093, leads: 1, cpl: 250, grade: 'Good' as const },
+  { date: 'Jan 20', impressions: 46000, responses15m: 39, responseRate: 0.085, leads: 1, cpl: 250, grade: 'Good' as const },
+  { date: 'Jan 13', impressions: 44000, responses15m: 35, responseRate: 0.080, leads: 1, cpl: 250, grade: 'Avg' as const },
+  { date: 'Jan 6', impressions: 42000, responses15m: 30, responseRate: 0.071, leads: 0, cpl: null, grade: 'Low' as const },
+];
+
 // Export all demo data
 export const williamsWealthDemo = {
   config: williamsWealthConfig,
@@ -443,6 +524,17 @@ export const williamsWealthDemo = {
   funnel,
   geoBreakdown,
   hourlyTraffic,
+  // New demo data
+  baselineLiftData,
+  liftSummary,
+  aumPipeline,
+  aumMetrics,
+  channelLTV,
+  channelVelocity,
+  industryBenchmarks,
+  haloEffect,
+  haloMultiplier,
+  spotPerformance,
 };
 
 export default williamsWealthDemo;
