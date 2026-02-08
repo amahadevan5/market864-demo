@@ -7,7 +7,8 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, AreaChart, Area, Legend
+  PieChart, Pie, Cell, AreaChart, Area, Legend,
+  ReferenceLine, ReferenceArea
 } from 'recharts';
 import { Tv, Users, Target, TrendingUp, Clock, Flame, ThermometerSun, DollarSign, X, Phone, Mail, Sun, Moon } from 'lucide-react';
 import * as demo from '../data/williamsWealthDemo';
@@ -213,7 +214,7 @@ function OverviewTab() {
         {/* Traffic After TV Spot */}
         <div className="bg-card rounded-lg shadow-sm border border-border p-6">
           <h3 className="text-lg font-semibold mb-1">Traffic After TV Spot</h3>
-          <p className="text-sm text-muted-foreground mb-4">Website visits spike after 4:30pm airing</p>
+          <p className="text-sm text-muted-foreground mb-4">Website visits spike within the attribution window after 4:30pm airing</p>
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={demo.hourlyTraffic}>
               <XAxis dataKey="hour" tick={{ fontSize: 10 }} />
@@ -225,6 +226,8 @@ function OverviewTab() {
                   borderRadius: '8px'
                 }}
               />
+              <ReferenceArea x1="4:30pm" x2="7pm" fill="#5A9BD5" fillOpacity={0.08} />
+              <ReferenceLine x="4:30pm" stroke="#5A9BD5" strokeDasharray="4 4" label={{ value: 'TV Spot', position: 'top', fontSize: 11, fill: '#5A9BD5' }} />
               <Area type="monotone" dataKey="visits" name="Visits" stroke="#5A9BD5" fill="#5A9BD5" fillOpacity={0.5} />
             </AreaChart>
           </ResponsiveContainer>
@@ -799,6 +802,33 @@ function TVPerformanceTab() {
             <p className="text-sm text-muted-foreground">DMA</p>
             <p className="font-medium">567 - Greenville-Spartanburg</p>
           </div>
+        </div>
+      </div>
+
+      {/* Attribution Windows */}
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+        <h3 className="text-lg font-semibold mb-1">Attribution Windows</h3>
+        <p className="text-sm text-muted-foreground mb-4">Confidence weight decays over time after TV spot</p>
+        <div className="space-y-3">
+          {[
+            { label: demo.attributionWindows.immediate.label, time: '15 min', weight: demo.attributionWindows.immediate.weight },
+            { label: demo.attributionWindows.sameEvening.label, time: '4 hours', weight: demo.attributionWindows.sameEvening.weight },
+            { label: demo.attributionWindows.nextDay.label, time: '24 hours', weight: demo.attributionWindows.nextDay.weight },
+            { label: demo.attributionWindows.weekWindow.label, time: '7 days', weight: demo.attributionWindows.weekWindow.weight },
+          ].map((window) => (
+            <div key={window.label} className="flex items-center gap-4">
+              <div className="w-36 text-sm font-medium">{window.label}</div>
+              <div className="flex-1 bg-muted rounded-full h-6 overflow-hidden">
+                <div
+                  className="h-full bg-primary flex items-center justify-end px-2 rounded-full"
+                  style={{ width: `${(window.weight / 40) * 100}%` }}
+                >
+                  <span className="text-xs text-white font-medium">{window.weight}%</span>
+                </div>
+              </div>
+              <div className="w-16 text-right text-xs text-muted-foreground">{window.time}</div>
+            </div>
+          ))}
         </div>
       </div>
 
