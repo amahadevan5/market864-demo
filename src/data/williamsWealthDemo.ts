@@ -225,9 +225,11 @@ export const recentLeads = [
     segment: "hot",
     dma: "Greenville DMA",
     time_since_spot: "12 min",
+    confidence: 0.92 as number | null,
+    attributionMethod: "time_window" as string | null,
   },
   {
-    id: "lead-002", 
+    id: "lead-002",
     name: "Patricia M.",
     score: 78,
     source: "Internet Lead",
@@ -240,6 +242,8 @@ export const recentLeads = [
     segment: "warm",
     dma: "Greenville DMA",
     time_since_spot: "N/A",
+    confidence: 0.35,
+    attributionMethod: "geo_match",
   },
   {
     id: "lead-003",
@@ -255,6 +259,8 @@ export const recentLeads = [
     segment: "hot",
     dma: "Atlanta DMA",
     time_since_spot: "N/A",
+    confidence: null,
+    attributionMethod: null,
   },
   {
     id: "lead-004",
@@ -270,6 +276,8 @@ export const recentLeads = [
     segment: "warm",
     dma: "Greenville DMA",
     time_since_spot: "2 hours",
+    confidence: 0.68,
+    attributionMethod: "time_window",
   },
   {
     id: "lead-005",
@@ -285,6 +293,8 @@ export const recentLeads = [
     segment: "cool",
     dma: "Greenville DMA",
     time_since_spot: "N/A",
+    confidence: null,
+    attributionMethod: null,
   },
 ];
 

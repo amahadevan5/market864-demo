@@ -501,6 +501,18 @@ function LeadsTab() {
                     <span>•</span>
                     <span>{lead.time_since_spot} after spot</span>
                   </div>
+                  {lead.confidence != null && (
+                    <span className={`inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${
+                      lead.confidence >= 0.7
+                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                        : lead.confidence >= 0.4
+                        ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                        : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                    }`}>
+                      <Tv className="w-3 h-3" />
+                      TV {Math.round(lead.confidence * 100)}%
+                    </span>
+                  )}
                 </div>
                 <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                   <button
@@ -616,6 +628,53 @@ function LeadDetailModal({ lead, onClose }: { lead: typeof demo.recentLeads[0]; 
               <p className="text-xs text-muted-foreground">Time Since Spot</p>
               <p className="text-sm font-medium">{lead.time_since_spot}</p>
             </div>
+          </div>
+
+          {/* Attribution Confidence */}
+          <div>
+            <h3 className="text-sm font-semibold mb-3">Attribution Confidence</h3>
+            {lead.confidence != null ? (
+              <div className="flex items-center gap-5">
+                {/* Confidence ring */}
+                <div className="relative w-16 h-16 flex-shrink-0">
+                  <svg viewBox="0 0 36 36" className="w-16 h-16 -rotate-90">
+                    <circle cx="18" cy="18" r="14" fill="none" strokeWidth="3"
+                      className="stroke-muted" />
+                    <circle cx="18" cy="18" r="14" fill="none" strokeWidth="3"
+                      strokeDasharray={`${lead.confidence * 88} 88`}
+                      strokeLinecap="round"
+                      className={lead.confidence >= 0.7 ? 'stroke-green-500' : lead.confidence >= 0.4 ? 'stroke-yellow-500' : 'stroke-gray-400'}
+                    />
+                  </svg>
+                  <span className="absolute inset-0 flex items-center justify-center text-sm font-bold">
+                    {Math.round(lead.confidence * 100)}%
+                  </span>
+                </div>
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                      lead.confidence >= 0.7
+                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                        : lead.confidence >= 0.4
+                        ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                        : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                    }`}>
+                      {lead.confidence >= 0.7 ? 'High' : lead.confidence >= 0.4 ? 'Medium' : 'Low'}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {lead.attributionMethod === 'time_window' ? 'Time Window' : 'Geo Match'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {lead.attributionMethod === 'time_window'
+                      ? `Arrived ${lead.time_since_spot} after TV spot in ${lead.dma}`
+                      : `Located in ${lead.dma} — no direct time correlation`}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No TV attribution</p>
+            )}
           </div>
 
           {/* Score Breakdown */}
