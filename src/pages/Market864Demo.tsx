@@ -117,6 +117,7 @@ export function Market864Demo() {
 
 function OverviewTab() {
   const showToast = useToast();
+  const [projectedLeads, setProjectedLeads] = useState(demo.kpiMetrics.tvAttributedLeads);
 
   return (
     <div className="space-y-6">
@@ -297,6 +298,54 @@ function OverviewTab() {
             <p className="text-xs text-green-600 mt-1">Within attribution window</p>
           </div>
         </div>
+      </div>
+
+      {/* ROI Projection Panel */}
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+        <h3 className="text-lg font-semibold mb-1">What If You Captured More TV Leads?</h3>
+        <p className="text-sm text-muted-foreground mb-5">TV Attribution Opportunity</p>
+
+        <div className="mb-6">
+          <label className="flex items-center justify-between text-sm mb-2">
+            <span className="text-muted-foreground">Monthly TV-attributed leads</span>
+            <span className="text-2xl font-bold text-primary">{projectedLeads}</span>
+          </label>
+          <input
+            type="range"
+            min={1}
+            max={20}
+            value={projectedLeads}
+            onChange={(e) => setProjectedLeads(Number(e.target.value))}
+            className="w-full accent-primary"
+          />
+          <div className="flex justify-between text-xs text-muted-foreground mt-1">
+            <span>1</span>
+            <span>20</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4 mb-4">
+          <div className="bg-muted/50 rounded-lg p-4 text-center">
+            <p className="text-2xl font-bold">
+              {Math.round(projectedLeads * demo.kpiMetrics.tvToTier1Conversion) * 12}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">Projected Tier 1 Clients/Year</p>
+          </div>
+          <div className="bg-muted/50 rounded-lg p-4 text-center">
+            <p className="text-2xl font-bold">
+              {(projectedLeads / demo.kpiMetrics.tvAttributedLeads).toFixed(1)}x
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">Capture Improvement</p>
+          </div>
+          <div className="bg-muted/50 rounded-lg p-4 text-center">
+            <p className="text-2xl font-bold">60%</p>
+            <p className="text-xs text-muted-foreground mt-1">TV→Tier 1 Rate</p>
+          </div>
+        </div>
+
+        <p className="text-xs text-muted-foreground">
+          Based on your CRM data: 60% of TV-attributed leads convert to Tier 1 clients, vs. 12.6% average across all sources.
+        </p>
       </div>
     </div>
   );
