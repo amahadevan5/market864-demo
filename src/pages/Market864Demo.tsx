@@ -802,6 +802,46 @@ function TVPerformanceTab() {
         </div>
       </div>
 
+      {/* Channel Performance Comparison */}
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+        <h3 className="text-lg font-semibold mb-4">Channel Performance Comparison</h3>
+        <div className="table-container">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Channel</th>
+                <th>Campaign</th>
+                <th>Leads</th>
+                <th>Meetings</th>
+                <th>Clients</th>
+                <th>Cost</th>
+                <th>CPL</th>
+                <th>ROI</th>
+              </tr>
+            </thead>
+            <tbody>
+              {demo.campaignPerformance.map((camp) => (
+                <tr key={camp.id} className={camp.channel === 'TV' ? 'border-l-2 border-l-primary' : ''}>
+                  <td className="font-medium">{camp.channel}</td>
+                  <td>{camp.name}</td>
+                  <td>{camp.leads}</td>
+                  <td>{camp.meetings}</td>
+                  <td>{camp.clients}</td>
+                  <td>${camp.cost.toLocaleString()}</td>
+                  <td>${camp.cpl}</td>
+                  <td className={`font-bold ${camp.roi >= 5 ? 'text-green-500' : 'text-muted-foreground'}`}>
+                    {camp.roi}x
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="text-sm text-muted-foreground mt-4">
+          <span className="font-medium text-foreground">TV drives 8.4x ROI</span> — highest quality leads at scale
+        </p>
+      </div>
+
       {/* Geographic Breakdown */}
       <div className="bg-card rounded-lg shadow-sm border border-border p-6">
         <h3 className="text-lg font-semibold mb-4">Leads by Location</h3>
