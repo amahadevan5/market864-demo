@@ -226,6 +226,43 @@
   .btn-outline {
     @apply border border-border bg-transparent text-foreground hover:bg-surface-elevated hover:border-border-strong;
   }
+
+  /* --- Panel Accent Borders --- */
+  .panel-accent-blue {
+    border-top: 2px solid #3B82F6;
+  }
+  .panel-accent-red {
+    border-top: 2px solid #EF4444;
+  }
+  .panel-accent-green {
+    border-top: 2px solid #10B981;
+  }
+  .panel-accent-amber {
+    border-top: 2px solid #F59E0B;
+  }
+
+  /* --- Section Title with emerald bar --- */
+  .section-title {
+    @apply text-lg font-semibold relative pl-3;
+  }
+  .section-title::before {
+    content: '';
+    @apply absolute left-0 top-0.5 bottom-0.5 w-[3px] rounded-full bg-accent;
+  }
+
+  /* --- Requires Data Source placeholder --- */
+  .requires-placeholder {
+    border: 2px dashed hsl(var(--border));
+    border-radius: 0.75rem;
+    background:
+      repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 8px,
+        hsl(var(--border-subtle) / 0.3) 8px,
+        hsl(var(--border-subtle) / 0.3) 9px
+      );
+  }
 }
 
 /* ============================================
@@ -253,5 +290,18 @@
   }
   .no-value::before {
     content: '—';
+  }
+
+  /* Animation delays for staggered entrance */
+  .delay-0 { animation-delay: 0ms; }
+  .delay-1 { animation-delay: 60ms; }
+  .delay-2 { animation-delay: 120ms; }
+  .delay-3 { animation-delay: 180ms; }
+  .delay-4 { animation-delay: 240ms; }
+  .delay-5 { animation-delay: 300ms; }
+
+  /* Header blur */
+  .backdrop-blur-header {
+    backdrop-filter: blur(12px);
   }
 }

@@ -3,7 +3,7 @@
  * Shows what the attribution system would look like with their data
  */
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -13,6 +13,41 @@ import {
 import { Tv, Users, Target, TrendingUp, Clock, Flame, ThermometerSun, DollarSign, X, Phone, Mail, Database, Award } from 'lucide-react';
 import * as demo from '../data/williamsWealthDemo';
 import { useToast } from '../components/ToastProvider';
+
+const CHART_COLORS = {
+  primary: '#3B82F6',
+  primaryLight: '#60A5FA',
+  secondary: '#64748B',
+  secondaryLight: '#94A3B8',
+  success: '#10B981',
+  accent: '#8B5CF6',
+  warning: '#F59E0B',
+} as const;
+
+const TOOLTIP_STYLE: React.CSSProperties = {
+  backgroundColor: 'hsl(220 13% 10%)',
+  border: '1px solid hsl(220 13% 20%)',
+  borderRadius: '8px',
+  boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+  fontSize: '13px',
+};
+
+function ChartGradients() {
+  return (
+    <svg width="0" height="0" style={{ position: 'absolute' }}>
+      <defs>
+        <linearGradient id="gradBlue" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={CHART_COLORS.primary} stopOpacity={0.4} />
+          <stop offset="100%" stopColor={CHART_COLORS.primary} stopOpacity={0.02} />
+        </linearGradient>
+        <linearGradient id="gradGreen" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={CHART_COLORS.success} stopOpacity={0.4} />
+          <stop offset="100%" stopColor={CHART_COLORS.success} stopOpacity={0.02} />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
 
 type TabId = 'overview' | 'leads' | 'tv' | 'alerts';
 const VALID_TABS: TabId[] = ['overview', 'leads', 'tv', 'alerts'];
@@ -38,17 +73,18 @@ export function Market864Demo() {
 
   return (
     <div className="min-h-screen bg-background">
+      <ChartGradients />
       {/* Header */}
-      <div className="border-b border-border bg-card">
+      <div className="border-b border-border bg-surface-elevated/80 backdrop-blur-header sticky top-0 z-40">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <Tv className="w-5 h-5 text-primary" />
+                <div className="w-10 h-10 bg-gradient-to-br from-accent to-emerald-400 rounded-lg flex items-center justify-center">
+                  <Tv className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-foreground">Market864</h1>
+                  <h1 className="text-page-title text-foreground">Market864</h1>
                   <p className="text-sm text-muted-foreground">TV Attribution Dashboard • WYFF4 Campaign</p>
                 </div>
               </div>
@@ -60,7 +96,7 @@ export function Market864Demo() {
                 aria-label="Toggle data mode"
               >
                 <div
-                  className="absolute h-7 rounded-full bg-primary transition-all duration-200 ease-in-out"
+                  className="absolute h-7 rounded-full bg-primary transition-all duration-200 ease-in-out shadow-[0_0_8px_hsl(160_84%_45%/0.4)]"
                   style={{ width: 'calc(50% - 2px)', left: dataMode === 'demo' ? '2px' : 'calc(50%)' }}
                 />
                 <span className={`relative z-10 flex-1 text-xs font-medium text-center transition-colors ${dataMode === 'demo' ? 'text-primary-foreground' : 'text-muted-foreground'}`}>
@@ -103,7 +139,7 @@ export function Market864Demo() {
       </div>
 
       {/* Content */}
-      <div className="container mx-auto px-6 py-6">
+      <div className="container mx-auto px-6 py-6" key={activeTab}>
         {activeTab === 'overview' && <OverviewTab dataMode={dataMode} />}
         {activeTab === 'leads' && <LeadsTab dataMode={dataMode} />}
         {activeTab === 'tv' && <TVPerformanceTab dataMode={dataMode} />}
@@ -122,67 +158,74 @@ function OverviewTab({ dataMode }: { dataMode: 'demo' | 'real' }) {
     <div className="space-y-6">
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard
-          title="TV Attributed Leads"
-          value={demo.metrics.attributed_leads}
-          subtitle={`${demo.metrics.attribution_rate}% attribution rate`}
-          icon={<Tv className="w-5 h-5" />}
-          trend={isReal ? undefined : +12}
-        />
-        <KPICard
-          title="Hot Leads"
-          value={demo.metrics.hot_leads}
-          subtitle="Score 80+"
-          icon={<Flame className="w-5 h-5" />}
-          trend={isReal ? undefined : +25}
-          requires={isReal ? 'Scoring engine' : undefined}
-        />
-        <KPICard
-          title="New Clients"
-          value={demo.metrics.conversions}
-          subtitle={`${demo.metrics.conversion_rate}% conversion`}
-          icon={<Users className="w-5 h-5" />}
-          trend={isReal ? undefined : +50}
-        />
-        <KPICard
-          title="TV ROI"
-          value={`${demo.metrics.tv_roi}x`}
-          subtitle="Return on TV spend"
-          icon={<DollarSign className="w-5 h-5" />}
-          trend={isReal ? undefined : +18}
-          requires={isReal ? 'Cost data from TV station' : undefined}
-        />
+        <div className="delay-0">
+          <KPICard
+            title="TV Attributed Leads"
+            value={demo.metrics.attributed_leads}
+            subtitle={`${demo.metrics.attribution_rate}% attribution rate`}
+            icon={<Tv className="w-5 h-5" />}
+            trend={isReal ? undefined : +12}
+            accentClass="panel-accent-blue"
+          />
+        </div>
+        <div className="delay-1">
+          <KPICard
+            title="Hot Leads"
+            value={demo.metrics.hot_leads}
+            subtitle="Score 80+"
+            icon={<Flame className="w-5 h-5" />}
+            trend={isReal ? undefined : +25}
+            requires={isReal ? 'Scoring engine' : undefined}
+            accentClass="panel-accent-red"
+          />
+        </div>
+        <div className="delay-2">
+          <KPICard
+            title="New Clients"
+            value={demo.metrics.conversions}
+            subtitle={`${demo.metrics.conversion_rate}% conversion`}
+            icon={<Users className="w-5 h-5" />}
+            trend={isReal ? undefined : +50}
+            accentClass="panel-accent-green"
+          />
+        </div>
+        <div className="delay-3">
+          <KPICard
+            title="TV ROI"
+            value={`${demo.metrics.tv_roi}x`}
+            subtitle="Return on TV spend"
+            icon={<DollarSign className="w-5 h-5" />}
+            trend={isReal ? undefined : +18}
+            requires={isReal ? 'Cost data from TV station' : undefined}
+            accentClass="panel-accent-amber"
+          />
+        </div>
       </div>
 
       {/* (G) Yearly Growth Trend — REAL data, same in both modes */}
-      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
-        <h3 className="text-lg font-semibold mb-1">Contact Growth Trend</h3>
+      <div className="panel p-panel opacity-0 animate-slide-up">
+        <h3 className="section-title mb-1">Contact Growth Trend</h3>
         <p className="text-sm text-muted-foreground mb-4">New contacts per year — 2026 projected</p>
         <ResponsiveContainer width="100%" height={220}>
           <AreaChart data={demo.yearlyGrowth}>
             <XAxis dataKey="year" tick={{ fontSize: 12 }} />
             <YAxis tick={{ fontSize: 12 }} />
             <Tooltip
-              contentStyle={{
-                backgroundColor: 'hsl(var(--card))',
-                border: '1px solid hsl(var(--border))',
-                borderRadius: '8px'
-              }}
+              contentStyle={TOOLTIP_STYLE}
             />
             <Area
               type="monotone"
               dataKey="contacts"
               name="Contacts"
-              stroke="#5A9BD5"
-              fill="#5A9BD5"
-              fillOpacity={0.2}
+              stroke={CHART_COLORS.primary}
+              fill="url(#gradBlue)"
               strokeWidth={2}
               strokeDasharray={undefined}
             />
             {/* Mark 2026 projected with annotation */}
-            <ReferenceLine x="2026" stroke="#94A3B8" strokeDasharray="4 4" label={{ value: 'Projected', position: 'top', fontSize: 11, fill: '#94A3B8' }} />
+            <ReferenceLine x="2026" stroke={CHART_COLORS.secondaryLight} strokeDasharray="4 4" label={{ value: 'Projected', position: 'top', fontSize: 11, fill: CHART_COLORS.secondaryLight }} />
             {/* TV campaign start */}
-            <ReferenceLine x="2024" stroke="#10B981" strokeDasharray="4 4" label={{ value: 'TV Start', position: 'insideTopRight', fontSize: 10, fill: '#10B981' }} />
+            <ReferenceLine x="2024" stroke={CHART_COLORS.success} strokeDasharray="4 4" label={{ value: 'TV Start', position: 'insideTopRight', fontSize: 10, fill: CHART_COLORS.success }} />
           </AreaChart>
         </ResponsiveContainer>
       </div>
@@ -190,8 +233,8 @@ function OverviewTab({ dataMode }: { dataMode: 'demo' | 'real' }) {
       {/* Charts Row 1: Weekly Performance (2/3) | Lead Sources + Tier Dist (1/3) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Weekly Performance */}
-        <div className="lg:col-span-2 bg-card rounded-lg shadow-sm border border-border p-6">
-          <h3 className="text-lg font-semibold mb-4">Weekly TV Spot Performance</h3>
+        <div className="lg:col-span-2 panel p-panel opacity-0 animate-slide-up">
+          <h3 className="section-title mb-4">Weekly TV Spot Performance</h3>
           {isReal ? (
             <RequiresDataSource source="Google Analytics + Wealthbox API" height="260px" />
           ) : (
@@ -200,15 +243,11 @@ function OverviewTab({ dataMode }: { dataMode: 'demo' | 'real' }) {
                 <XAxis dataKey="week" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px'
-                  }}
+                  contentStyle={TOOLTIP_STYLE}
                 />
                 <Legend />
-                <Bar dataKey="visits" name="Website Visits" fill="#94A3B8" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="leads" name="TV Attributed Leads" fill="#5A9BD5" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="visits" name="Website Visits" fill={CHART_COLORS.secondaryLight} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="leads" name="TV Attributed Leads" fill={CHART_COLORS.primary} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -217,8 +256,8 @@ function OverviewTab({ dataMode }: { dataMode: 'demo' | 'real' }) {
         {/* Right Column: Lead Sources + (B) Client Tier Distribution */}
         <div className="space-y-6">
           {/* Attribution Sources — REAL data, same in both modes */}
-          <div className="bg-card rounded-lg shadow-sm border border-border p-6">
-            <h3 className="text-lg font-semibold mb-4">Lead Sources</h3>
+          <div className="panel p-panel opacity-0 animate-slide-up">
+            <h3 className="section-title mb-4">Lead Sources</h3>
             <ResponsiveContainer width="100%" height={200}>
               <PieChart>
                 <Pie
@@ -250,7 +289,7 @@ function OverviewTab({ dataMode }: { dataMode: 'demo' | 'real' }) {
           </div>
 
           {/* (B) Client Tier Distribution — REAL data, same in both modes */}
-          <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+          <div className="panel p-panel opacity-0 animate-slide-up">
             <h3 className="text-sm font-semibold mb-3">Client Tier Distribution</h3>
             <ResponsiveContainer width="100%" height={140}>
               <PieChart>
@@ -291,23 +330,23 @@ function OverviewTab({ dataMode }: { dataMode: 'demo' | 'real' }) {
       {/* (A) Baseline Lift Analysis (1/2) | Funnel (1/2) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* (A) Baseline Lift Analysis — replaces "Traffic After TV Spot" */}
-        <div className="bg-card rounded-lg shadow-sm border border-border p-6">
-          <h3 className="text-lg font-semibold mb-1">Baseline Lift Analysis</h3>
+        <div className="panel p-panel opacity-0 animate-slide-up">
+          <h3 className="section-title mb-1">Baseline Lift Analysis</h3>
           <p className="text-sm text-muted-foreground mb-3">Predicted baseline vs actual traffic after 4:30pm airing</p>
           {isReal ? (
             <RequiresDataSource source="Google Analytics" height="220px" />
           ) : (
             <>
               <div className="grid grid-cols-3 gap-3 mb-4">
-                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 text-center">
+                <div className="panel border-t-2 border-t-blue-500/30 p-3 text-center">
                   <p className="text-lg font-bold text-blue-600">+{demo.liftSummary.liftPercent}%</p>
                   <p className="text-[10px] text-muted-foreground">Lift</p>
                 </div>
-                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 text-center">
+                <div className="panel border-t-2 border-t-blue-500/30 p-3 text-center">
                   <p className="text-lg font-bold text-blue-600">{demo.liftSummary.incrementalVisits}</p>
                   <p className="text-[10px] text-muted-foreground">Incremental Visits/Wk</p>
                 </div>
-                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 text-center">
+                <div className="panel border-t-2 border-t-blue-500/30 p-3 text-center">
                   <p className="text-lg font-bold text-blue-600">{demo.liftSummary.peakMultiple}x</p>
                   <p className="text-[10px] text-muted-foreground">Peak vs Baseline</p>
                 </div>
@@ -317,16 +356,12 @@ function OverviewTab({ dataMode }: { dataMode: 'demo' | 'real' }) {
                   <XAxis dataKey="time" tick={{ fontSize: 10 }} />
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
+                    contentStyle={TOOLTIP_STYLE}
                   />
-                  <ReferenceArea x1="4:30" x2="7:00" fill="#5A9BD5" fillOpacity={0.06} />
-                  <ReferenceLine x="4:30" stroke="#5A9BD5" strokeDasharray="4 4" label={{ value: 'TV Spot', position: 'top', fontSize: 10, fill: '#5A9BD5' }} />
-                  <Area type="monotone" dataKey="baseline" name="Predicted Baseline" stroke="#94A3B8" fill="none" strokeDasharray="6 3" strokeWidth={2} />
-                  <Area type="monotone" dataKey="actual" name="Actual Traffic" stroke="#5A9BD5" fill="#5A9BD5" fillOpacity={0.3} strokeWidth={2} />
+                  <ReferenceArea x1="4:30" x2="7:00" fill={CHART_COLORS.primary} fillOpacity={0.06} />
+                  <ReferenceLine x="4:30" stroke={CHART_COLORS.primary} strokeDasharray="4 4" label={{ value: 'TV Spot', position: 'top', fontSize: 10, fill: CHART_COLORS.primary }} />
+                  <Area type="monotone" dataKey="baseline" name="Predicted Baseline" stroke={CHART_COLORS.secondaryLight} fill="none" strokeDasharray="6 3" strokeWidth={2} />
+                  <Area type="monotone" dataKey="actual" name="Actual Traffic" stroke={CHART_COLORS.primary} fill="url(#gradBlue)" strokeWidth={2} />
                 </AreaChart>
               </ResponsiveContainer>
             </>
@@ -334,8 +369,8 @@ function OverviewTab({ dataMode }: { dataMode: 'demo' | 'real' }) {
         </div>
 
         {/* Conversion Funnel */}
-        <div className="bg-card rounded-lg shadow-sm border border-border p-6">
-          <h3 className="text-lg font-semibold mb-4">Attribution Funnel</h3>
+        <div className="panel p-panel opacity-0 animate-slide-up">
+          <h3 className="section-title mb-4">Attribution Funnel</h3>
           {isReal ? (
             <RequiresDataSource source="Google Analytics" height="180px" />
           ) : (
@@ -365,23 +400,23 @@ function OverviewTab({ dataMode }: { dataMode: 'demo' | 'real' }) {
       </div>
 
       {/* (C) AUM Pipeline Tracker — full width */}
-      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
-        <h3 className="text-lg font-semibold mb-1">AUM Pipeline Tracker</h3>
+      <div className="panel p-panel opacity-0 animate-slide-up">
+        <h3 className="section-title mb-1">AUM Pipeline Tracker</h3>
         <p className="text-sm text-muted-foreground mb-4">TV-attributed assets under management through the pipeline</p>
         {isReal ? (
           <RequiresDataSource source="Wealthbox AUM data + Cost data from TV station" height="220px" />
         ) : (
           <>
             <div className="grid grid-cols-3 gap-4 mb-4">
-              <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center">
+              <div className="panel border-t-2 border-t-emerald-500/30 p-3 text-center">
                 <p className="text-lg font-bold text-green-600">${(demo.aumMetrics.totalPipelineAUM / 1e6).toFixed(1)}M</p>
                 <p className="text-[10px] text-muted-foreground">Pipeline AUM</p>
               </div>
-              <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center">
+              <div className="panel border-t-2 border-t-emerald-500/30 p-3 text-center">
                 <p className="text-lg font-bold text-green-600">${(demo.aumMetrics.weightedPipelineAUM / 1e6).toFixed(1)}M</p>
                 <p className="text-[10px] text-muted-foreground">Weighted Pipeline</p>
               </div>
-              <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center">
+              <div className="panel border-t-2 border-t-emerald-500/30 p-3 text-center">
                 <p className="text-lg font-bold text-green-600">${demo.aumMetrics.aumPerTVDollar}</p>
                 <p className="text-[10px] text-muted-foreground">AUM per TV $1</p>
               </div>
@@ -392,13 +427,9 @@ function OverviewTab({ dataMode }: { dataMode: 'demo' | 'real' }) {
                 <YAxis type="category" dataKey="stage" width={150} tick={{ fontSize: 12 }} />
                 <Tooltip
                   formatter={(value: number) => [`$${value.toLocaleString()}`, 'AUM']}
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px'
-                  }}
+                  contentStyle={TOOLTIP_STYLE}
                 />
-                <Bar dataKey="aum" name="AUM" fill="#10B981" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="aum" name="AUM" fill={CHART_COLORS.success} radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </>
@@ -407,18 +438,18 @@ function OverviewTab({ dataMode }: { dataMode: 'demo' | 'real' }) {
 
       {/* Latest Hot Lead */}
       {isReal ? (
-        <div className="bg-card rounded-lg shadow-sm border border-border p-6">
-          <h3 className="text-lg font-semibold mb-4">Latest Hot Lead</h3>
+        <div className="panel p-panel opacity-0 animate-slide-up">
+          <h3 className="section-title mb-4">Latest Hot Lead</h3>
           <RequiresDataSource source="Live Wealthbox API + Scoring engine" height="120px" />
         </div>
       ) : (
-        <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+        <div className="panel p-panel opacity-0 animate-slide-up">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Latest Hot Lead</h3>
+            <h3 className="section-title">Latest Hot Lead</h3>
             <span className="text-sm text-muted-foreground">22 minutes ago</span>
           </div>
           <div className="flex items-center gap-6">
-            <div className="flex items-center justify-center w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30">
+            <div className="flex items-center justify-center w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30 shadow-[0_0_12px_hsl(160_84%_45%/0.3)]">
               <span className="text-3xl font-bold text-green-600">94</span>
             </div>
             <div className="flex-1">
@@ -430,13 +461,13 @@ function OverviewTab({ dataMode }: { dataMode: 'demo' | 'real' }) {
               <div className="flex gap-2 mt-3">
                 <button
                   onClick={() => showToast('Calling Robert Anderson...')}
-                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium"
+                  className="btn btn-md btn-primary"
                 >
                   Call Now
                 </button>
                 <button
                   onClick={() => showToast('Opening CRM record...')}
-                  className="px-4 py-2 border border-border rounded-lg text-sm font-medium"
+                  className="btn btn-md btn-outline"
                 >
                   View in CRM
                 </button>
@@ -452,8 +483,8 @@ function OverviewTab({ dataMode }: { dataMode: 'demo' | 'real' }) {
       )}
 
       {/* ROI Projection Panel — uses real 60% rate, same in both modes */}
-      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
-        <h3 className="text-lg font-semibold mb-1">What If You Captured More TV Leads?</h3>
+      <div className="panel p-panel opacity-0 animate-slide-up">
+        <h3 className="section-title mb-1">What If You Captured More TV Leads?</h3>
         <p className="text-sm text-muted-foreground mb-5">TV Attribution Opportunity</p>
 
         <div className="mb-6">
@@ -528,8 +559,8 @@ function RealLeadsView() {
   return (
     <div className="space-y-4">
       {/* Summary Header */}
-      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
-        <h3 className="text-lg font-semibold mb-1">
+      <div className="panel p-panel opacity-0 animate-slide-up">
+        <h3 className="section-title mb-1">
           {summary.totalTVLeads} TV-attributed leads tracked in Wealthbox ({summary.convertedToTier1} converted to Tier 1)
         </h3>
         <p className="text-sm text-muted-foreground">
@@ -542,7 +573,7 @@ function RealLeadsView() {
         {journeys.map((journey) => {
           const isTier1 = journey.outcome === 'Tier 1 Client';
           return (
-            <div key={journey.id} className="bg-card rounded-lg shadow-sm border border-border p-5">
+            <div key={journey.id} className="panel p-panel opacity-0 animate-slide-up">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-mono text-muted-foreground">{journey.id}</span>
@@ -687,7 +718,7 @@ function DemoLeadsView() {
           { segment: 'Nurture', count: 8, icon: <Clock className="w-4 h-4" />, color: 'text-blue-500' },
           { segment: 'Cold', count: 3, icon: <Target className="w-4 h-4" />, color: 'text-gray-500' },
         ].map(({ segment, count, icon, color }) => (
-          <div key={segment} className="bg-card rounded-lg border border-border p-4 flex items-center gap-3">
+          <div key={segment} className="panel p-4 flex items-center gap-3 opacity-0 animate-slide-up">
             <span className={color}>{icon}</span>
             <div>
               <p className="text-2xl font-bold">{count}</p>
@@ -698,7 +729,7 @@ function DemoLeadsView() {
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-card rounded-lg border border-border p-4">
+      <div className="panel p-4 opacity-0 animate-slide-up">
         <div className="flex flex-wrap items-center gap-3">
           <span className="text-sm font-medium text-muted-foreground">Segment:</span>
           <div className="flex flex-wrap gap-1">
@@ -706,10 +737,8 @@ function DemoLeadsView() {
               <button
                 key={seg}
                 onClick={() => setSegmentFilter(seg)}
-                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
-                  segmentFilter === seg
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-muted-foreground hover:text-foreground'
+                className={`btn btn-sm ${
+                  segmentFilter === seg ? 'btn-primary' : 'btn-ghost'
                 }`}
               >
                 {seg === 'all' ? 'All' : seg.charAt(0).toUpperCase() + seg.slice(1)}
@@ -725,10 +754,8 @@ function DemoLeadsView() {
               <button
                 key={src}
                 onClick={() => setSourceFilter(src)}
-                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
-                  sourceFilter === src
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-muted-foreground hover:text-foreground'
+                className={`btn btn-sm ${
+                  sourceFilter === src ? 'btn-primary' : 'btn-ghost'
                 }`}
               >
                 {src === 'all' ? 'All' : src}
@@ -768,7 +795,7 @@ function DemoLeadsView() {
       {/* Lead Cards */}
       <div className="space-y-3">
         {filteredLeads.length === 0 ? (
-          <div className="bg-card rounded-lg border border-border p-8 text-center">
+          <div className="panel p-8 text-center opacity-0 animate-slide-up">
             <p className="text-muted-foreground">No leads match your filters.</p>
             <button onClick={clearFilters} className="text-sm text-primary hover:underline mt-2">
               Clear filters
@@ -779,11 +806,11 @@ function DemoLeadsView() {
             <div
               key={lead.id}
               onClick={() => setSelectedLead(lead)}
-              className="bg-card rounded-lg shadow-sm border border-border p-4 cursor-pointer hover:border-primary/50 transition-colors"
+              className="panel p-4 panel-hover cursor-pointer opacity-0 animate-slide-up"
             >
               <div className="flex items-start gap-4">
                 <div className={`flex items-center justify-center w-14 h-14 rounded-lg font-bold text-lg ${
-                  lead.score >= 80 ? 'bg-green-100 text-green-600 dark:bg-green-900/30' :
+                  lead.score >= 80 ? 'bg-green-100 text-green-600 dark:bg-green-900/30 shadow-[0_0_12px_hsl(160_84%_45%/0.3)]' :
                   lead.score >= 60 ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30' :
                   'bg-gray-100 text-gray-600 dark:bg-gray-800'
                 }`}>
@@ -818,13 +845,13 @@ function DemoLeadsView() {
                 <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                   <button
                     onClick={() => showToast(`Calling ${lead.name}...`)}
-                    className="px-3 py-1.5 bg-primary text-primary-foreground rounded text-sm"
+                    className="btn btn-sm btn-primary"
                   >
                     Call
                   </button>
                   <button
                     onClick={() => showToast(`Opening email draft for ${lead.name}...`)}
-                    className="px-3 py-1.5 border border-border rounded text-sm"
+                    className="btn btn-sm btn-outline"
                   >
                     Email
                   </button>
@@ -880,7 +907,7 @@ function LeadDetailModal({ lead, onClose }: { lead: typeof demo.recentLeads[0]; 
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/50 animate-fade-in" />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" />
       <div
         className="relative bg-card border border-border rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-fade-in"
         onClick={(e) => e.stopPropagation()}
@@ -889,7 +916,7 @@ function LeadDetailModal({ lead, onClose }: { lead: typeof demo.recentLeads[0]; 
         <div className="sticky top-0 bg-card border-b border-border p-6 rounded-t-xl flex items-start justify-between">
           <div className="flex items-center gap-4">
             <div className={`flex items-center justify-center w-16 h-16 rounded-full font-bold text-2xl ${
-              lead.score >= 80 ? 'bg-green-100 text-green-600 dark:bg-green-900/30' :
+              lead.score >= 80 ? 'bg-green-100 text-green-600 dark:bg-green-900/30 shadow-[0_0_12px_hsl(160_84%_45%/0.3)]' :
               lead.score >= 60 ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30' :
               'bg-gray-100 text-gray-600 dark:bg-gray-800'
             }`}>
@@ -1057,14 +1084,14 @@ function LeadDetailModal({ lead, onClose }: { lead: typeof demo.recentLeads[0]; 
           <div className="flex gap-2 pt-2 border-t border-border">
             <button
               onClick={() => showToast(`Calling ${lead.name}...`)}
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium"
+              className="btn btn-md btn-primary"
             >
               <Phone className="w-4 h-4" />
               Call
             </button>
             <button
               onClick={() => showToast(`Opening email draft for ${lead.name}...`)}
-              className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg text-sm font-medium"
+              className="btn btn-md btn-outline"
             >
               <Mail className="w-4 h-4" />
               Email
@@ -1082,17 +1109,17 @@ function TVPerformanceTab({ dataMode }: { dataMode: 'demo' | 'real' }) {
   const tvCampaign = demo.campaignPerformance.find(c => c.channel === 'TV')!;
 
   const gradeColors: Record<string, string> = {
-    Best: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-    Good: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-    Avg: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
-    Low: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+    Best: 'bg-state-success/15 text-[hsl(160_84%_45%)] font-semibold',
+    Good: 'bg-blue-500/15 text-blue-400 font-semibold',
+    Avg: 'bg-foreground-subtle/10 text-foreground-muted font-semibold',
+    Low: 'bg-state-danger/15 text-[hsl(0_72%_51%)] font-semibold',
   };
 
   return (
     <div className="space-y-6">
       {/* Campaign Info — REAL data, same in both modes */}
-      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
-        <h3 className="text-lg font-semibold mb-4">Active Campaign</h3>
+      <div className="panel p-panel opacity-0 animate-slide-up">
+        <h3 className="section-title mb-4">Active Campaign</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
             <p className="text-sm text-muted-foreground">Station</p>
@@ -1114,8 +1141,8 @@ function TVPerformanceTab({ dataMode }: { dataMode: 'demo' | 'real' }) {
       </div>
 
       {/* Attribution Windows — REAL data, same in both modes */}
-      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
-        <h3 className="text-lg font-semibold mb-1">Attribution Windows</h3>
+      <div className="panel p-panel opacity-0 animate-slide-up">
+        <h3 className="section-title mb-1">Attribution Windows</h3>
         <p className="text-sm text-muted-foreground mb-4">Confidence weight decays over time after TV spot</p>
         <div className="space-y-3">
           {[
@@ -1141,8 +1168,8 @@ function TVPerformanceTab({ dataMode }: { dataMode: 'demo' | 'real' }) {
       </div>
 
       {/* Channel Performance Comparison */}
-      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
-        <h3 className="text-lg font-semibold mb-4">Channel Performance Comparison</h3>
+      <div className="panel p-panel opacity-0 animate-slide-up">
+        <h3 className="section-title mb-4">Channel Performance Comparison</h3>
         <div className="table-container">
           <table className="table">
             <thead>
@@ -1207,8 +1234,8 @@ function TVPerformanceTab({ dataMode }: { dataMode: 'demo' | 'real' }) {
       </div>
 
       {/* (I) Spot-Level Performance */}
-      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
-        <h3 className="text-lg font-semibold mb-4">Spot-Level Performance</h3>
+      <div className="panel p-panel opacity-0 animate-slide-up">
+        <h3 className="section-title mb-4">Spot-Level Performance</h3>
         {isReal ? (
           <RequiresDataSource source="Google Analytics + TV station logs" height="220px" />
         ) : (
@@ -1250,8 +1277,8 @@ function TVPerformanceTab({ dataMode }: { dataMode: 'demo' | 'real' }) {
       {/* (D) Client LTV by Channel (1/2) | (E) Time-to-Close by Channel (1/2) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* (D) Client LTV by Channel */}
-        <div className="bg-card rounded-lg shadow-sm border border-border p-6">
-          <h3 className="text-lg font-semibold mb-1">Client LTV by Channel</h3>
+        <div className="panel p-panel opacity-0 animate-slide-up">
+          <h3 className="section-title mb-1">Client LTV by Channel</h3>
           <p className="text-sm text-muted-foreground mb-4">Lifetime value and acquisition cost comparison</p>
           {isReal ? (
             <RequiresDataSource source="Wealthbox AUM data + Ad platform integration" height="220px" />
@@ -1295,8 +1322,8 @@ function TVPerformanceTab({ dataMode }: { dataMode: 'demo' | 'real' }) {
         </div>
 
         {/* (E) Time-to-Close by Channel */}
-        <div className="bg-card rounded-lg shadow-sm border border-border p-6">
-          <h3 className="text-lg font-semibold mb-1">Time-to-Close by Channel</h3>
+        <div className="panel p-panel opacity-0 animate-slide-up">
+          <h3 className="section-title mb-1">Time-to-Close by Channel</h3>
           <p className="text-sm text-muted-foreground mb-4">Days from lead to meeting and meeting to client</p>
           {isReal ? (
             <RequiresDataSource source="Wealthbox pipeline timestamps" height="220px" />
@@ -1306,15 +1333,11 @@ function TVPerformanceTab({ dataMode }: { dataMode: 'demo' | 'real' }) {
                 <XAxis type="number" tick={{ fontSize: 11 }} label={{ value: 'Days', position: 'insideBottomRight', offset: -5, fontSize: 11 }} />
                 <YAxis type="category" dataKey="channel" width={70} tick={{ fontSize: 12 }} />
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px'
-                  }}
+                  contentStyle={TOOLTIP_STYLE}
                 />
                 <Legend />
-                <Bar dataKey="daysToMeeting" name="Days to Meeting" fill="#5A9BD5" stackId="a" radius={[0, 0, 0, 0]} />
-                <Bar dataKey="daysToClient" name="Days to Client" fill="#94A3B8" stackId="a" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="daysToMeeting" name="Days to Meeting" fill={CHART_COLORS.primary} stackId="a" radius={[0, 0, 0, 0]} />
+                <Bar dataKey="daysToClient" name="Days to Client" fill={CHART_COLORS.secondaryLight} stackId="a" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -1322,10 +1345,10 @@ function TVPerformanceTab({ dataMode }: { dataMode: 'demo' | 'real' }) {
       </div>
 
       {/* (F) Industry Benchmarks — full width */}
-      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+      <div className="panel p-panel opacity-0 animate-slide-up">
         <div className="flex items-center gap-2 mb-1">
           <Award className="w-5 h-5 text-primary" />
-          <h3 className="text-lg font-semibold">Industry Benchmarks</h3>
+          <h3 className="section-title">Industry Benchmarks</h3>
         </div>
         <p className="text-sm text-muted-foreground mb-4">Market864 performance vs industry averages</p>
         {isReal ? (
@@ -1382,14 +1405,14 @@ function TVPerformanceTab({ dataMode }: { dataMode: 'demo' | 'real' }) {
       </div>
 
       {/* (H) TV Halo Effect — full width */}
-      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
-        <h3 className="text-lg font-semibold mb-1">TV Halo Effect</h3>
+      <div className="panel p-panel opacity-0 animate-slide-up">
+        <h3 className="section-title mb-1">TV Halo Effect</h3>
         <p className="text-sm text-muted-foreground mb-4">Performance uplift on TV airing days vs non-TV days</p>
         {isReal ? (
           <RequiresDataSource source="Google Analytics + Ad platform integration" height="260px" />
         ) : (
           <>
-            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mb-4 text-center">
+            <div className="panel border-t-2 border-t-blue-500/30 p-4 mb-4 text-center">
               <p className="text-2xl font-bold text-blue-600">{demo.haloMultiplier}x</p>
               <p className="text-sm text-muted-foreground">
                 Total Halo Multiplier — TV's true impact is {Math.round((demo.haloMultiplier - 1) * 100)}% larger than direct attribution
@@ -1400,15 +1423,11 @@ function TVPerformanceTab({ dataMode }: { dataMode: 'demo' | 'real' }) {
                 <XAxis dataKey="metric" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px'
-                  }}
+                  contentStyle={TOOLTIP_STYLE}
                 />
                 <Legend />
-                <Bar dataKey="tvDay" name="TV Airing Days" fill="#5A9BD5" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="nonTvDay" name="Non-TV Days" fill="#94A3B8" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="tvDay" name="TV Airing Days" fill={CHART_COLORS.primary} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="nonTvDay" name="Non-TV Days" fill={CHART_COLORS.secondaryLight} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </>
@@ -1416,8 +1435,8 @@ function TVPerformanceTab({ dataMode }: { dataMode: 'demo' | 'real' }) {
       </div>
 
       {/* Geographic Breakdown — REAL data, same in both modes */}
-      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
-        <h3 className="text-lg font-semibold mb-4">Leads by Location</h3>
+      <div className="panel p-panel opacity-0 animate-slide-up">
+        <h3 className="section-title mb-4">Leads by Location</h3>
         <div className="space-y-3">
           {demo.geoBreakdown.map((geo) => (
             <div key={geo.city} className="flex items-center gap-4">
@@ -1437,8 +1456,8 @@ function TVPerformanceTab({ dataMode }: { dataMode: 'demo' | 'real' }) {
       </div>
 
       {/* Topic Performance */}
-      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
-        <h3 className="text-lg font-semibold mb-4">Performance by Topic of Interest</h3>
+      <div className="panel p-panel opacity-0 animate-slide-up">
+        <h3 className="section-title mb-4">Performance by Topic of Interest</h3>
         {isReal ? (
           <RequiresDataSource source="CRM topic tagging" height="300px" />
         ) : (
@@ -1447,13 +1466,9 @@ function TVPerformanceTab({ dataMode }: { dataMode: 'demo' | 'real' }) {
               <XAxis type="number" />
               <YAxis type="category" dataKey="topic" width={140} tick={{ fontSize: 12 }} />
               <Tooltip
-                contentStyle={{
-                  backgroundColor: 'hsl(var(--card))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '8px'
-                }}
+                contentStyle={TOOLTIP_STYLE}
               />
-              <Bar dataKey="count" name="Leads" fill="#5A9BD5" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="count" name="Leads" fill={CHART_COLORS.primary} radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         )}
@@ -1499,8 +1514,8 @@ function AlertsTab({ dataMode }: { dataMode: 'demo' | 'real' }) {
       )}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Alert Configuration</h3>
-          <div className="bg-card rounded-lg shadow-sm border border-border divide-y divide-border">
+          <h3 className="section-title">Alert Configuration</h3>
+          <div className="panel divide-y divide-border opacity-0 animate-slide-up">
             {alerts.map((alert, i) => (
               <div key={alert.name} className="p-4 flex items-center justify-between">
                 <div>
@@ -1509,7 +1524,7 @@ function AlertsTab({ dataMode }: { dataMode: 'demo' | 'real' }) {
                 </div>
                 <div
                   onClick={() => toggleAlert(i)}
-                  className={`w-10 h-6 rounded-full cursor-pointer transition-colors ${alert.enabled ? 'bg-green-500' : 'bg-gray-300'} relative`}
+                  className={`w-10 h-6 rounded-full cursor-pointer transition-colors ${alert.enabled ? 'bg-green-500 shadow-[0_0_8px_hsl(160_84%_45%/0.4)]' : 'bg-gray-300'} relative`}
                 >
                   <div className={`absolute w-4 h-4 bg-white rounded-full top-1 transition-all ${alert.enabled ? 'right-1' : 'left-1'}`} />
                 </div>
@@ -1519,8 +1534,8 @@ function AlertsTab({ dataMode }: { dataMode: 'demo' | 'real' }) {
         </div>
 
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Recent Alerts</h3>
-          <div className="bg-card rounded-lg shadow-sm border border-border divide-y divide-border">
+          <h3 className="section-title">Recent Alerts</h3>
+          <div className="panel divide-y divide-border opacity-0 animate-slide-up">
             {[
               { type: 'hot', msg: 'Hot lead: Robert Anderson (94)', time: '22 min ago' },
               { type: 'spike', msg: 'Traffic spike detected after TV spot', time: '35 min ago' },
@@ -1547,10 +1562,10 @@ function AlertsTab({ dataMode }: { dataMode: 'demo' | 'real' }) {
 function RequiresDataSource({ source, title, height }: { source: string; title?: string; height?: string }) {
   return (
     <div
-      className="border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center text-center p-6"
+      className="requires-placeholder flex flex-col items-center justify-center text-center p-6"
       style={{ minHeight: height || '200px' }}
     >
-      <Database className="w-8 h-8 text-muted-foreground/50 mb-3" />
+      <Database className="w-10 h-10 text-muted-foreground/50 mb-3 animate-pulse" />
       {title && <p className="text-sm font-medium text-muted-foreground mb-1">{title}</p>}
       <p className="text-sm font-medium text-muted-foreground">Requires: <span className="text-foreground">{source}</span></p>
       <p className="text-xs text-muted-foreground mt-1">Connect this data source to populate this section</p>
@@ -1558,38 +1573,39 @@ function RequiresDataSource({ source, title, height }: { source: string; title?:
   );
 }
 
-function KPICard({ title, value, subtitle, icon, trend, requires }: {
+function KPICard({ title, value, subtitle, icon, trend, requires, accentClass }: {
   title: string;
   value: string | number;
   subtitle: string;
   icon: React.ReactNode;
   trend?: number;
   requires?: string;
+  accentClass?: string;
 }) {
   if (requires) {
     return (
-      <div className="bg-card rounded-lg shadow-sm border border-border p-5">
+      <div className={`panel p-panel panel-hover opacity-0 animate-slide-up ${accentClass || ''}`}>
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <p className="text-2xl font-bold mt-1 text-muted-foreground/40">--</p>
+            <p className="kpi-label">{title}</p>
+            <p className="kpi-value mt-1 text-muted-foreground/40">--</p>
             <p className="text-xs text-muted-foreground mt-1">Requires: {requires}</p>
           </div>
-          <div className="p-2 bg-muted rounded-lg text-muted-foreground/40">{icon}</div>
+          <div className="icon-box icon-box-md bg-accent-muted text-foreground-muted/40">{icon}</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-card rounded-lg shadow-sm border border-border p-5">
+    <div className={`panel p-panel panel-hover opacity-0 animate-slide-up ${accentClass || ''}`}>
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <p className="text-2xl font-bold mt-1">{value}</p>
+          <p className="kpi-label">{title}</p>
+          <p className="kpi-value mt-1">{value}</p>
           <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
         </div>
-        <div className="p-2 bg-primary/10 rounded-lg text-primary">{icon}</div>
+        <div className="icon-box icon-box-md bg-accent-muted text-accent">{icon}</div>
       </div>
       {trend && (
         <div className={`flex items-center gap-1 mt-2 text-sm ${trend > 0 ? 'text-green-600' : 'text-red-500'}`}>
